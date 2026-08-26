@@ -1,0 +1,194 @@
+[
+    {
+        "table_name": "registrations",
+        "ordinal_position": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 2,
+        "column_name": "event_id",
+        "data_type": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 3,
+        "column_name": "registration_type",
+        "data_type": "USER-DEFINED",
+        "is_nullable": "NO",
+        "column_default": "'ONLINE'::registration_type"
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 4,
+        "column_name": "name",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 5,
+        "column_name": "dob",
+        "data_type": "date",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 6,
+        "column_name": "phone",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 7,
+        "column_name": "email",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 8,
+        "column_name": "gender",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 9,
+        "column_name": "year_of_study",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 10,
+        "column_name": "parish",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 11,
+        "column_name": "diocese",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 14,
+        "column_name": "confirmed",
+        "data_type": "boolean",
+        "is_nullable": "NO",
+        "column_default": "false"
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 15,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "is_nullable": "NO",
+        "column_default": "now()"
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 16,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "is_nullable": "NO",
+        "column_default": "now()"
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 17,
+        "column_name": "college",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 18,
+        "column_name": "address",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": "''::text"
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 19,
+        "column_name": "affiliation",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "registrations",
+        "ordinal_position": 20,
+        "column_name": "institute",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null
+    },
+    {
+        "table_name": "tickets",
+        "ordinal_position": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+    },
+    {
+        "table_name": "tickets",
+        "ordinal_position": 2,
+        "column_name": "registration_id",
+        "data_type": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "tickets",
+        "ordinal_position": 3,
+        "column_name": "token_hash",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null
+    },
+    {
+        "table_name": "tickets",
+        "ordinal_position": 4,
+        "column_name": "issued_at",
+        "data_type": "timestamp with time zone",
+        "is_nullable": "NO",
+        "column_default": "now()"
+    },
+    {
+        "table_name": "tickets",
+        "ordinal_position": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "is_nullable": "NO",
+        "column_default": "now()"
+    },
+    {
+        "table_name": "tickets",
+        "ordinal_position": 6,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "is_nullable": "NO",
+        "column_default": "now()"
+    }
+]
