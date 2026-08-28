@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
-export type VolunteerRegistrationType = "ONLINE" | "SPOT";
+export type VolunteerRegistrationType = "ONLINE" | "OFFLINE" | "SPOT";
 
 export interface VolunteerRegistration {
   id: string;
@@ -42,7 +42,7 @@ function RegistrationTypeBadge({ type }: { type: VolunteerRegistrationType }) {
           : "bg-violet-500/10 text-violet-600 dark:text-violet-400"
       )}
     >
-      {type === "ONLINE" ? "Online" : "Spot"}
+      {type === "ONLINE" ? "Online" : "Offline"}
     </span>
   );
 }

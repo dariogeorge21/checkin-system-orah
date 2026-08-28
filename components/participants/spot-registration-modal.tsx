@@ -1027,7 +1027,7 @@ export function SpotRegistrationModal({
                   Registration & Check-in Complete!
                 </h3>
                 <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-                  Participant has been registered with type <strong>SPOT</strong>, verified, and checked in to the event.
+                  Participant has been registered with type <strong>OFFLINE</strong>, verified, and checked in to the event.
                 </p>
               </div>
 

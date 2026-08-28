@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
-export type RegistrationType = "ONLINE" | "SPOT";
+export type RegistrationType = "ONLINE" | "OFFLINE";
 
 export interface Participant {
   id: string;
@@ -24,9 +24,10 @@ export interface Participant {
   created_at: string;
 }
 
-const REGISTRATION_TYPE_LABELS: Record<RegistrationType, string> = {
+const REGISTRATION_TYPE_LABELS: Record<string, string> = {
   ONLINE: "Online",
-  SPOT: "Spot",
+  OFFLINE: "Offline",
+  SPOT: "Offline",
 };
 
 function RegistrationTypeBadge({ type }: { type: RegistrationType }) {
@@ -39,7 +40,7 @@ function RegistrationTypeBadge({ type }: { type: RegistrationType }) {
           : "bg-violet-500/10 text-violet-600 dark:text-violet-400"
       )}
     >
-      {REGISTRATION_TYPE_LABELS[type]}
+      {REGISTRATION_TYPE_LABELS[type] || type}
     </span>
   );
 }
@@ -135,7 +136,7 @@ export function ParticipantsTable({ participants }: ParticipantsTableProps) {
         >
           <option value="ALL">All Types</option>
           <option value="ONLINE">Online</option>
-          <option value="SPOT">Spot</option>
+          <option value="OFFLINE">Offline</option>
         </select>
 
         {/* Status filter */}

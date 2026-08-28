@@ -23,7 +23,7 @@ async function getDashboardStats() {
       (r) => (!r.checkins || r.checkins.length === 0) && r.registration_type === "ONLINE"
     ).length ?? 0;
   const spotParticipants =
-    regSummary?.filter((r) => r.registration_type === "SPOT").length ?? 0;
+    regSummary?.filter((r) => r.registration_type === "OFFLINE" || (r.registration_type as any) === "SPOT").length ?? 0;
   const totalParticipants = regSummary?.length ?? 0;
 
   const verifiedVolunteers =
@@ -33,7 +33,7 @@ async function getDashboardStats() {
       (v) => (!v.checkins || v.checkins.length === 0) && v.registration_type === "ONLINE"
     ).length ?? 0;
   const spotVolunteers =
-    volSummary?.filter((v) => v.registration_type === "SPOT").length ?? 0;
+    volSummary?.filter((v) => (v.registration_type as any) === "OFFLINE" || v.registration_type === "SPOT").length ?? 0;
   const totalVolunteers = volSummary?.length ?? 0;
 
   return {

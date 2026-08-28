@@ -100,7 +100,7 @@ export async function POST(req: Request) {
     // 1. Insert into registrations
     const newRegistrationPayload = {
       event_id: eventId,
-      registration_type: "SPOT",
+      registration_type: "OFFLINE",
       name: sanitizeInput(formData.name.trim()),
       dob: formData.dob,
       phone: sanitizeInput(formData.phone.trim()),

@@ -9,7 +9,7 @@
 -- ---------------------------------------------------------------------------
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'registration_type') THEN
-    CREATE TYPE registration_type AS ENUM ('ONLINE', 'SPOT');
+    CREATE TYPE registration_type AS ENUM ('ONLINE', 'OFFLINE');
   END IF;
 END $$;
 

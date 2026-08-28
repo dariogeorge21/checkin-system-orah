@@ -149,9 +149,9 @@ export default function ParticipantsPage() {
             </div>
             <div className="hidden sm:block h-4 w-px bg-border self-center" />
             <div className="text-sm">
-              <span className="text-muted-foreground">Spot: </span>
+              <span className="text-muted-foreground">Offline: </span>
               <span className="font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
-                {participants.filter((p) => p.registration_type === "SPOT").length}
+                {participants.filter((p) => p.registration_type === "OFFLINE" || (p.registration_type as any) === "SPOT").length}
               </span>
             </div>
           </div>
