@@ -1,53 +1,45 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
 import { ParticipantsTable } from "@/components/participants/participants-table";
 import type { Participant } from "@/components/participants/participants-table";
+import { Spinner } from "@/components/ui/spinner";
 
-export const metadata = {
-  title: "Participants | Orah",
-};
+export default function ParticipantsPage() {
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-async function getParticipants(): Promise<Participant[]> {
-  const supabase = await createClient();
+  const fetchParticipants = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
 
-  const { data, error } = await supabase
-    .from("registrations")
-    .select(
-      "id, name, phone, email, gender, dob, parish, diocese, affiliation, college, institute, year_of_study, address, registration_type, created_at, checkins(id)"
-    )
-    .order("created_at", { ascending: false });
+    try {
+      const res = await fetch("/api/participants", { cache: "no-store" });
+      if (!res.ok) {
+        throw new Error(`Failed to fetch participants: ${res.statusText}`);
+      }
+      const data = await res.json();
+      setParticipants(data.participants ?? []);
+    } catch (err: any) {
+      console.error("Error fetching participants:", err);
+      setError(err?.message || "Failed to load participants");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
-  if (error) {
-    console.error("Failed to fetch participants:", error.message);
-    return [];
-  }
-
-  return (
-    data?.map((row) => ({
-      id: row.id,
-      name: row.name,
-      phone: row.phone,
-      email: row.email,
-      gender: row.gender,
-      dob: row.dob,
-      parish: row.parish,
-      diocese: row.diocese,
-      affiliation: row.affiliation,
-      college: row.college,
-      institute: row.institute,
-      year_of_study: row.year_of_study,
-      address: row.address,
-      registration_type: row.registration_type,
-      created_at: row.created_at,
-      is_verified: Array.isArray(row.checkins) && row.checkins.length > 0,
-    })) ?? []
-  );
-}
-
-export default async function ParticipantsPage() {
-  const participants = await getParticipants();
+  useEffect(() => {
+    fetchParticipants();
+  }, [fetchParticipants]);
 
   return (
     <div className="space-y-6">
+      <title>Participants | Orah</title>
+
       {/* Page heading */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -56,39 +48,92 @@ export default async function ParticipantsPage() {
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             All registered participants for Campus Meet 2026.{" "}
-            <span className="font-medium text-foreground">
-              {participants.length} total
-            </span>
+            {!loading && (
+              <span className="font-medium text-foreground">
+                {participants.length} total
+              </span>
+            )}
           </p>
         </div>
+
+        <button
+          onClick={() => fetchParticipants(true)}
+          disabled={loading || refreshing}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-all cursor-pointer"
+          title="Refresh participants"
+        >
+          {refreshing ? (
+            <Spinner className="size-3.5" />
+          ) : (
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+              <path d="M8 16H3v5" />
+            </svg>
+          )}
+          Refresh
+        </button>
       </div>
 
-      {/* Stats bar */}
-      <div className="flex flex-wrap gap-4 rounded-xl border border-border bg-muted/20 px-4 py-3">
-        <div className="text-sm">
-          <span className="text-muted-foreground">Verified: </span>
-          <span className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
-            {participants.filter((p) => p.is_verified).length}
-          </span>
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center justify-between rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+          <p>{error}</p>
+          <button
+            onClick={() => fetchParticipants()}
+            className="rounded-md bg-destructive px-3 py-1 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 transition-all cursor-pointer"
+          >
+            Retry
+          </button>
         </div>
-        <div className="hidden sm:block h-4 w-px bg-border self-center" />
-        <div className="text-sm">
-          <span className="text-muted-foreground">Pending: </span>
-          <span className="font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
-            {participants.filter((p) => !p.is_verified && p.registration_type === "ONLINE").length}
-          </span>
-        </div>
-        <div className="hidden sm:block h-4 w-px bg-border self-center" />
-        <div className="text-sm">
-          <span className="text-muted-foreground">Spot: </span>
-          <span className="font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
-            {participants.filter((p) => p.registration_type === "SPOT").length}
-          </span>
-        </div>
-      </div>
+      )}
 
-      {/* Table */}
-      <ParticipantsTable participants={participants} />
+      {/* Loading state */}
+      {loading ? (
+        <div className="space-y-4">
+          <div className="h-12 w-full animate-pulse rounded-xl bg-muted/40" />
+          <div className="h-64 w-full animate-pulse rounded-xl bg-muted/20" />
+        </div>
+      ) : (
+        <>
+          {/* Stats bar */}
+          <div className="flex flex-wrap gap-4 rounded-xl border border-border bg-muted/20 px-4 py-3">
+            <div className="text-sm">
+              <span className="text-muted-foreground">Verified: </span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                {participants.filter((p) => p.is_verified).length}
+              </span>
+            </div>
+            <div className="hidden sm:block h-4 w-px bg-border self-center" />
+            <div className="text-sm">
+              <span className="text-muted-foreground">Pending: </span>
+              <span className="font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
+                {participants.filter((p) => !p.is_verified && p.registration_type === "ONLINE").length}
+              </span>
+            </div>
+            <div className="hidden sm:block h-4 w-px bg-border self-center" />
+            <div className="text-sm">
+              <span className="text-muted-foreground">Spot: </span>
+              <span className="font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
+                {participants.filter((p) => p.registration_type === "SPOT").length}
+              </span>
+            </div>
+          </div>
+
+          {/* Table */}
+          <ParticipantsTable participants={participants} />
+        </>
+      )}
     </div>
   );
 }

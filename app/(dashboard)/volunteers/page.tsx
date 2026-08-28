@@ -1,44 +1,45 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import React, { useState, useEffect, useCallback } from "react";
 import { VolunteersTable } from "@/components/volunteers/volunteers-table";
 import type { VolunteerRegistration } from "@/components/volunteers/volunteers-table";
+import { Spinner } from "@/components/ui/spinner";
 
-export const metadata = {
-  title: "Volunteers | Orah",
-};
+export default function VolunteersPage() {
+  const [volunteers, setVolunteers] = useState<VolunteerRegistration[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-async function getVolunteers(): Promise<VolunteerRegistration[]> {
-  const supabase = await createClient();
+  const fetchVolunteers = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
 
-  const { data, error } = await supabase
-    .from("volunteer_registrations")
-    .select("id, name, phone, ministry, role, registration_type, created_at, checkins(id)")
-    .order("created_at", { ascending: false });
+    try {
+      const res = await fetch("/api/volunteers", { cache: "no-store" });
+      if (!res.ok) {
+        throw new Error(`Failed to fetch volunteers: ${res.statusText}`);
+      }
+      const data = await res.json();
+      setVolunteers(data.volunteers ?? []);
+    } catch (err: any) {
+      console.error("Error fetching volunteers:", err);
+      setError(err?.message || "Failed to load volunteers");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
-  if (error) {
-    // Table may not exist yet (pre-migration) — return empty gracefully
-    console.error("Failed to fetch volunteers:", error.message);
-    return [];
-  }
-
-  return (
-    data?.map((row) => ({
-      id: row.id,
-      name: row.name,
-      phone: row.phone,
-      ministry: row.ministry,
-      role: row.role,
-      registration_type: row.registration_type,
-      created_at: row.created_at,
-      is_verified: Array.isArray(row.checkins) && row.checkins.length > 0,
-    })) ?? []
-  );
-}
-
-export default async function VolunteersPage() {
-  const volunteers = await getVolunteers();
+  useEffect(() => {
+    fetchVolunteers();
+  }, [fetchVolunteers]);
 
   return (
     <div className="space-y-6">
+      <title>Volunteers | Orah</title>
+
       {/* Page heading */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -52,13 +53,41 @@ export default async function VolunteersPage() {
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             Volunteer registrations for Campus Meet 2026.{" "}
-            {volunteers.length > 0 && (
+            {!loading && volunteers.length > 0 && (
               <span className="font-medium text-foreground">
                 {volunteers.length} total
               </span>
             )}
           </p>
         </div>
+
+        <button
+          onClick={() => fetchVolunteers(true)}
+          disabled={loading || refreshing}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-all cursor-pointer"
+          title="Refresh volunteers"
+        >
+          {refreshing ? (
+            <Spinner className="size-3.5" />
+          ) : (
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+              <path d="M8 16H3v5" />
+            </svg>
+          )}
+          Refresh
+        </button>
       </div>
 
       {/* Note banner */}
@@ -87,27 +116,50 @@ export default async function VolunteersPage() {
         </div>
       </div>
 
-      {/* Stats bar */}
-      {volunteers.length > 0 && (
-        <div className="flex flex-wrap gap-4 rounded-xl border border-border bg-muted/20 px-4 py-3">
-          <div className="text-sm">
-            <span className="text-muted-foreground">Verified: </span>
-            <span className="font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
-              {volunteers.filter((v) => v.is_verified).length}
-            </span>
-          </div>
-          <div className="hidden sm:block h-4 w-px bg-border self-center" />
-          <div className="text-sm">
-            <span className="text-muted-foreground">Pending: </span>
-            <span className="font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
-              {volunteers.filter((v) => !v.is_verified).length}
-            </span>
-          </div>
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center justify-between rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+          <p>{error}</p>
+          <button
+            onClick={() => fetchVolunteers()}
+            className="rounded-md bg-destructive px-3 py-1 text-xs font-medium text-destructive-foreground hover:bg-destructive/90 transition-all cursor-pointer"
+          >
+            Retry
+          </button>
         </div>
       )}
 
-      {/* Table */}
-      <VolunteersTable volunteers={volunteers} />
+      {/* Loading state */}
+      {loading ? (
+        <div className="space-y-4">
+          <div className="h-12 w-full animate-pulse rounded-xl bg-muted/40" />
+          <div className="h-64 w-full animate-pulse rounded-xl bg-muted/20" />
+        </div>
+      ) : (
+        <>
+          {/* Stats bar */}
+          {volunteers.length > 0 && (
+            <div className="flex flex-wrap gap-4 rounded-xl border border-border bg-muted/20 px-4 py-3">
+              <div className="text-sm">
+                <span className="text-muted-foreground">Verified: </span>
+                <span className="font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
+                  {volunteers.filter((v) => v.is_verified).length}
+                </span>
+              </div>
+              <div className="hidden sm:block h-4 w-px bg-border self-center" />
+              <div className="text-sm">
+                <span className="text-muted-foreground">Pending: </span>
+                <span className="font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
+                  {volunteers.filter((v) => !v.is_verified).length}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Table */}
+          <VolunteersTable volunteers={volunteers} />
+        </>
+      )}
     </div>
   );
 }
