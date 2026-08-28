@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   title: "Orah | Campus Meet 2026",
   description:
     "Secure check-in and registration portal for Campus Meet 2026 – JY Pala Missionaries",
+  icons: {
+    icon: "/JyLogo.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

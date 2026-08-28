@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useActionState } from "react";
+import Image from "next/image";
 import { useTheme } from "next-themes";
 import { loginAction } from "@/features/auth/actions";
 import { Button } from "@/components/ui/button";
@@ -77,17 +78,16 @@ export default function LoginPage() {
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] backdrop-blur-2xl shadow-[0_32px_80px_-12px_rgba(0,0,0,0.6)] p-8">
           {/* Logo / Brand */}
           <div className="mb-8 text-center">
-            {/* Cross icon */}
-            <div className="mx-auto mb-4 inline-flex items-center justify-center size-14 rounded-2xl bg-[oklch(0.55_0.22_270)] shadow-[0_0_40px_-4px_oklch(0.55_0.22_270)]">
-              <svg
-                width="26"
-                height="26"
-                viewBox="0 0 24 24"
-                fill="white"
-                aria-hidden="true"
-              >
-                <path d="M12 2C11.45 2 11 2.45 11 3V10H4C3.45 10 3 10.45 3 11V13C3 13.55 3.45 14 4 14H11V21C11 21.55 11.45 22 12 22C12.55 22 13 21.55 13 21V14H20C20.55 14 21 13.55 21 13V11C21 10.45 20.55 10 20 10H13V3C13 2.45 12.55 2 12 2Z" />
-              </svg>
+            {/* Jesus Youth Logo */}
+            <div className="mx-auto mb-4 inline-flex items-center justify-center size-16 rounded-2xl overflow-hidden shadow-[0_0_40px_-4px_rgba(255,255,255,0.15)]">
+              <Image
+                src="/JyLogo.png"
+                alt="Jesus Youth Logo"
+                width={64}
+                height={64}
+                className="size-16 object-contain"
+                priority
+              />
             </div>
             <h1 className="text-xl font-semibold tracking-tight text-white">
               Orah

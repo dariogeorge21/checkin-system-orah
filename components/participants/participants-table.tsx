@@ -20,7 +20,7 @@ export interface Participant {
   year_of_study: string | null;
   address: string;
   registration_type: RegistrationType;
-  confirmed: boolean;
+  is_verified: boolean;
   created_at: string;
 }
 
@@ -44,12 +44,12 @@ function RegistrationTypeBadge({ type }: { type: RegistrationType }) {
   );
 }
 
-function ConfirmedBadge({ confirmed }: { confirmed: boolean }) {
+function VerifiedBadge({ is_verified }: { is_verified: boolean }) {
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-        confirmed
+        is_verified
           ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
           : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
       )}
@@ -57,10 +57,10 @@ function ConfirmedBadge({ confirmed }: { confirmed: boolean }) {
       <span
         className={cn(
           "size-1.5 rounded-full",
-          confirmed ? "bg-emerald-500" : "bg-amber-500"
+          is_verified ? "bg-emerald-500" : "bg-amber-500"
         )}
       />
-      {confirmed ? "Approved" : "Pending"}
+      {is_verified ? "Verified" : "Pending"}
     </span>
   );
 }

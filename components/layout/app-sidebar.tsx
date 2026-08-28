@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Sidebar,
@@ -51,10 +52,15 @@ export function AppSidebar() {
       <SidebarHeader className="px-4 py-5">
         <div className="flex items-center gap-3">
           {/* Logo mark */}
-          <div className="flex-shrink-0 flex items-center justify-center size-8 rounded-lg bg-[oklch(0.55_0.22_270)] shadow-[0_0_20px_-4px_oklch(0.55_0.22_270)]">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="white" aria-hidden="true">
-              <path d="M12 2C11.45 2 11 2.45 11 3V10H4C3.45 10 3 10.45 3 11V13C3 13.55 3.45 14 4 14H11V21C11 21.55 11.45 22 12 22C12.55 22 13 21.55 13 21V14H20C20.55 14 21 13.55 21 13V11C21 10.45 20.55 10 20 10H13V3C13 2.45 12.55 2 12 2Z" />
-            </svg>
+          <div className="flex-shrink-0 flex items-center justify-center size-8 rounded-lg overflow-hidden">
+            <Image
+              src="/JyLogo.png"
+              alt="Jesus Youth Logo"
+              width={32}
+              height={32}
+              className="size-8 object-contain"
+              priority
+            />
           </div>
           <div className="flex flex-col leading-none">
             <span className="font-semibold text-sm tracking-tight text-sidebar-foreground">Orah</span>
