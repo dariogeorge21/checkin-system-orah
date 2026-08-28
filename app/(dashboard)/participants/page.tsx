@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ParticipantsTable } from "@/components/participants/participants-table";
 import type { Participant } from "@/components/participants/participants-table";
+import { SpotRegistrationModal } from "@/components/participants/spot-registration-modal";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function ParticipantsPage() {
@@ -10,6 +11,7 @@ export default function ParticipantsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSpotModalOpen, setIsSpotModalOpen] = useState(false);
 
   const fetchParticipants = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -41,7 +43,7 @@ export default function ParticipantsPage() {
       <title>Participants | Orah</title>
 
       {/* Page heading */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">
             Participants
@@ -56,33 +58,57 @@ export default function ParticipantsPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => fetchParticipants(true)}
-          disabled={loading || refreshing}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-all cursor-pointer"
-          title="Refresh participants"
-        >
-          {refreshing ? (
-            <Spinner className="size-3.5" />
-          ) : (
+        <div className="flex items-center gap-2 self-start">
+          <button
+            id="btn-new-registration"
+            onClick={() => setIsSpotModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-all cursor-pointer"
+            title="Register a new participant on the spot"
+          >
             <svg
-              width="14"
-              height="14"
+              width="15"
+              height="15"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-              <path d="M21 3v5h-5" />
-              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-              <path d="M8 16H3v5" />
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-          )}
-          Refresh
-        </button>
+            New Registration
+          </button>
+
+          <button
+            onClick={() => fetchParticipants(true)}
+            disabled={loading || refreshing}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-all cursor-pointer"
+            title="Refresh participants"
+          >
+            {refreshing ? (
+              <Spinner className="size-3.5" />
+            ) : (
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M8 16H3v5" />
+              </svg>
+            )}
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Error Banner */}
@@ -134,6 +160,13 @@ export default function ParticipantsPage() {
           <ParticipantsTable participants={participants} />
         </>
       )}
+
+      {/* Spot Registration Modal */}
+      <SpotRegistrationModal
+        open={isSpotModalOpen}
+        onOpenChange={setIsSpotModalOpen}
+        onSuccess={() => fetchParticipants(true)}
+      />
     </div>
   );
 }
