@@ -5,66 +5,46 @@ async function getDashboardStats() {
   const supabase = await createClient();
 
   const [
-    { count: approvedParticipants },
-    { count: pendingParticipants },
-    { count: spotParticipants },
-    { count: totalParticipants },
-    { count: approvedVolunteers },
-    { count: pendingVolunteers },
-    { count: spotVolunteers },
-    { count: totalVolunteers },
+    { data: regSummary },
+    { data: volSummary },
   ] = await Promise.all([
-    // Participants – confirmed (approved by reg team)
     supabase
       .from("registrations")
-      .select("*", { count: "exact", head: true })
-      .eq("confirmed", true),
-    // Participants – pending (not confirmed, online)
-    supabase
-      .from("registrations")
-      .select("*", { count: "exact", head: true })
-      .eq("confirmed", false)
-      .eq("registration_type", "ONLINE"),
-    // Participants – spot registrations
-    supabase
-      .from("registrations")
-      .select("*", { count: "exact", head: true })
-      .eq("registration_type", "SPOT"),
-    // Participants – total
-    supabase
-      .from("registrations")
-      .select("*", { count: "exact", head: true }),
-    // Volunteers – approved
+      .select("id, registration_type, checkins(id)"),
     supabase
       .from("volunteer_registrations")
-      .select("*", { count: "exact", head: true })
-      .eq("confirmed", true),
-    // Volunteers – pending
-    supabase
-      .from("volunteer_registrations")
-      .select("*", { count: "exact", head: true })
-      .eq("confirmed", false)
-      .eq("registration_type", "ONLINE"),
-    // Volunteers – spot
-    supabase
-      .from("volunteer_registrations")
-      .select("*", { count: "exact", head: true })
-      .eq("registration_type", "SPOT"),
-    // Volunteers – total
-    supabase
-      .from("volunteer_registrations")
-      .select("*", { count: "exact", head: true }),
+      .select("id, registration_type, checkins(id)"),
   ]);
 
+  const verifiedParticipants =
+    regSummary?.filter((r) => Array.isArray(r.checkins) && r.checkins.length > 0).length ?? 0;
+  const pendingParticipants =
+    regSummary?.filter(
+      (r) => (!r.checkins || r.checkins.length === 0) && r.registration_type === "ONLINE"
+    ).length ?? 0;
+  const spotParticipants =
+    regSummary?.filter((r) => r.registration_type === "SPOT").length ?? 0;
+  const totalParticipants = regSummary?.length ?? 0;
+
+  const verifiedVolunteers =
+    volSummary?.filter((v) => Array.isArray(v.checkins) && v.checkins.length > 0).length ?? 0;
+  const pendingVolunteers =
+    volSummary?.filter(
+      (v) => (!v.checkins || v.checkins.length === 0) && v.registration_type === "ONLINE"
+    ).length ?? 0;
+  const spotVolunteers =
+    volSummary?.filter((v) => v.registration_type === "SPOT").length ?? 0;
+  const totalVolunteers = volSummary?.length ?? 0;
+
   return {
-    approvedParticipants: approvedParticipants ?? 0,
-    pendingParticipants: pendingParticipants ?? 0,
-    spotParticipants: spotParticipants ?? 0,
-    totalParticipants: totalParticipants ?? 0,
-    approvedVolunteers: approvedVolunteers ?? 0,
-    pendingVolunteers: pendingVolunteers ?? 0,
-    spotVolunteers: spotVolunteers ?? 0,
-    totalVolunteers: totalVolunteers ?? 0,
+    verifiedParticipants,
+    pendingParticipants,
+    spotParticipants,
+    totalParticipants,
+    verifiedVolunteers,
+    pendingVolunteers,
+    spotVolunteers,
+    totalVolunteers,
   };
 }
 
@@ -113,12 +93,12 @@ export default async function DashboardPage() {
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <KpiCard
-            id="kpi-participants-approved"
-            label="Approved Registrations"
-            sublabel="Confirmed by registration team"
-            count={stats.approvedParticipants}
+            id="kpi-participants-verified"
+            label="Verified Registrations"
+            sublabel="Checked in via checkins table"
+            count={stats.verifiedParticipants}
             variant="green"
-            badge="Confirmed"
+            badge="Verified"
             icon={
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
@@ -128,8 +108,8 @@ export default async function DashboardPage() {
           />
           <KpiCard
             id="kpi-participants-pending"
-            label="Pending Approvals"
-            sublabel="Online registrations awaiting approval"
+            label="Pending Check-in"
+            sublabel="Online registrations awaiting check-in"
             count={stats.pendingParticipants}
             variant="amber"
             badge="Pending"
@@ -169,12 +149,12 @@ export default async function DashboardPage() {
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <KpiCard
-            id="kpi-volunteers-approved"
-            label="Approved Volunteers"
-            sublabel="Confirmed by registration team"
-            count={stats.approvedVolunteers}
+            id="kpi-volunteers-verified"
+            label="Verified Volunteers"
+            sublabel="Checked in via checkins table"
+            count={stats.verifiedVolunteers}
             variant="indigo"
-            badge="Confirmed"
+            badge="Verified"
             icon={
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -186,7 +166,7 @@ export default async function DashboardPage() {
           <KpiCard
             id="kpi-volunteers-pending"
             label="Pending Volunteers"
-            sublabel="Awaiting confirmation"
+            sublabel="Awaiting check-in"
             count={stats.pendingVolunteers}
             variant="rose"
             badge="Pending"

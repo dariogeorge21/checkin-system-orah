@@ -74,7 +74,7 @@ const PAGE_SIZE = 20;
 export function ParticipantsTable({ participants }: ParticipantsTableProps) {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"ALL" | RegistrationType>("ALL");
-  const [filterStatus, setFilterStatus] = useState<"ALL" | "confirmed" | "pending">("ALL");
+  const [filterStatus, setFilterStatus] = useState<"ALL" | "verified" | "pending">("ALL");
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
@@ -90,8 +90,8 @@ export function ParticipantsTable({ participants }: ParticipantsTableProps) {
         filterType === "ALL" || p.registration_type === filterType;
       const matchesStatus =
         filterStatus === "ALL" ||
-        (filterStatus === "confirmed" && p.confirmed) ||
-        (filterStatus === "pending" && !p.confirmed);
+        (filterStatus === "verified" && p.is_verified) ||
+        (filterStatus === "pending" && !p.is_verified);
       return matchesSearch && matchesType && matchesStatus;
     });
   }, [participants, search, filterType, filterStatus]);
@@ -146,7 +146,7 @@ export function ParticipantsTable({ participants }: ParticipantsTableProps) {
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[oklch(0.55_0.22_270)]/30 transition-all"
         >
           <option value="ALL">All Status</option>
-          <option value="confirmed">Approved</option>
+          <option value="verified">Verified</option>
           <option value="pending">Pending</option>
         </select>
 
@@ -209,7 +209,7 @@ export function ParticipantsTable({ participants }: ParticipantsTableProps) {
                       <RegistrationTypeBadge type={p.registration_type} />
                     </td>
                     <td className="px-4 py-3">
-                      <ConfirmedBadge confirmed={p.confirmed} />
+                      <VerifiedBadge is_verified={p.is_verified} />
                     </td>
                     <td className="px-4 py-3 hidden xl:table-cell text-xs text-muted-foreground tabular-nums">
                       {new Date(p.created_at).toLocaleDateString("en-IN", {

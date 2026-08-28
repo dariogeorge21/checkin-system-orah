@@ -11,7 +11,7 @@ async function getVolunteers(): Promise<VolunteerRegistration[]> {
 
   const { data, error } = await supabase
     .from("volunteer_registrations")
-    .select("id, name, phone, ministry, role, registration_type, confirmed, created_at")
+    .select("id, name, phone, ministry, role, registration_type, created_at, checkins(id)")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -20,7 +20,18 @@ async function getVolunteers(): Promise<VolunteerRegistration[]> {
     return [];
   }
 
-  return (data as VolunteerRegistration[]) ?? [];
+  return (
+    data?.map((row) => ({
+      id: row.id,
+      name: row.name,
+      phone: row.phone,
+      ministry: row.ministry,
+      role: row.role,
+      registration_type: row.registration_type,
+      created_at: row.created_at,
+      is_verified: Array.isArray(row.checkins) && row.checkins.length > 0,
+    })) ?? []
+  );
 }
 
 export default async function VolunteersPage() {
@@ -80,16 +91,16 @@ export default async function VolunteersPage() {
       {volunteers.length > 0 && (
         <div className="flex flex-wrap gap-4 rounded-xl border border-border bg-muted/20 px-4 py-3">
           <div className="text-sm">
-            <span className="text-muted-foreground">Confirmed: </span>
+            <span className="text-muted-foreground">Verified: </span>
             <span className="font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
-              {volunteers.filter((v) => v.confirmed).length}
+              {volunteers.filter((v) => v.is_verified).length}
             </span>
           </div>
           <div className="hidden sm:block h-4 w-px bg-border self-center" />
           <div className="text-sm">
             <span className="text-muted-foreground">Pending: </span>
             <span className="font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
-              {volunteers.filter((v) => !v.confirmed).length}
+              {volunteers.filter((v) => !v.is_verified).length}
             </span>
           </div>
         </div>

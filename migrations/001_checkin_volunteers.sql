@@ -179,7 +179,6 @@ SELECT
   r.email             AS participant_email,
   r.parish            AS participant_parish,
   r.registration_type AS participant_registration_type,
-  r.confirmed         AS participant_confirmed,
 
   -- Volunteer fields
   vr.name             AS volunteer_name,
@@ -187,7 +186,6 @@ SELECT
   vr.ministry         AS volunteer_ministry,
   vr.role             AS volunteer_role,
   vr.registration_type AS volunteer_registration_type,
-  vr.confirmed        AS volunteer_confirmed,
 
   -- Resolved display fields (whichever is populated)
   COALESCE(r.name, vr.name)   AS display_name,

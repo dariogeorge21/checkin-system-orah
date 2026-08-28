@@ -12,22 +12,22 @@ export interface VolunteerRegistration {
   ministry: string;
   role: string;
   registration_type: VolunteerRegistrationType;
-  confirmed: boolean;
+  is_verified: boolean;
   created_at: string;
 }
 
-function ConfirmedBadge({ confirmed }: { confirmed: boolean }) {
+function VerifiedBadge({ is_verified }: { is_verified: boolean }) {
   return (
     <span
       className={cn(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-        confirmed
+        is_verified
           ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
           : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
       )}
     >
-      <span className={cn("size-1.5 rounded-full", confirmed ? "bg-emerald-500" : "bg-amber-500")} />
-      {confirmed ? "Confirmed" : "Pending"}
+      <span className={cn("size-1.5 rounded-full", is_verified ? "bg-emerald-500" : "bg-amber-500")} />
+      {is_verified ? "Verified" : "Pending"}
     </span>
   );
 }
@@ -56,7 +56,7 @@ interface VolunteersTableProps {
 export function VolunteersTable({ volunteers }: VolunteersTableProps) {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"ALL" | VolunteerRegistrationType>("ALL");
-  const [filterStatus, setFilterStatus] = useState<"ALL" | "confirmed" | "pending">("ALL");
+  const [filterStatus, setFilterStatus] = useState<"ALL" | "verified" | "pending">("ALL");
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
@@ -71,8 +71,8 @@ export function VolunteersTable({ volunteers }: VolunteersTableProps) {
       const matchesType = filterType === "ALL" || v.registration_type === filterType;
       const matchesStatus =
         filterStatus === "ALL" ||
-        (filterStatus === "confirmed" && v.confirmed) ||
-        (filterStatus === "pending" && !v.confirmed);
+        (filterStatus === "verified" && v.is_verified) ||
+        (filterStatus === "pending" && !v.is_verified);
       return matchesSearch && matchesType && matchesStatus;
     });
   }, [volunteers, search, filterType, filterStatus]);
@@ -119,7 +119,7 @@ export function VolunteersTable({ volunteers }: VolunteersTableProps) {
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[oklch(0.55_0.22_270)]/30 transition-all"
         >
           <option value="ALL">All Status</option>
-          <option value="confirmed">Confirmed</option>
+          <option value="verified">Verified</option>
           <option value="pending">Pending</option>
         </select>
 
@@ -185,7 +185,7 @@ export function VolunteersTable({ volunteers }: VolunteersTableProps) {
                       <RegistrationTypeBadge type={v.registration_type} />
                     </td>
                     <td className="px-4 py-3">
-                      <ConfirmedBadge confirmed={v.confirmed} />
+                      <VerifiedBadge is_verified={v.is_verified} />
                     </td>
                     <td className="px-4 py-3 hidden xl:table-cell text-xs text-muted-foreground tabular-nums">
                       {new Date(v.created_at).toLocaleDateString("en-IN", {
