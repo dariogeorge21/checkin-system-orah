@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { VolunteersTable } from "@/components/volunteers/volunteers-table";
 import type { VolunteerRegistration } from "@/components/volunteers/volunteers-table";
+import { VolunteerSpotRegistrationModal } from "@/components/volunteers/volunteer-spot-registration-modal";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function VolunteersPage() {
@@ -10,6 +11,7 @@ export default function VolunteersPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSpotModalOpen, setIsSpotModalOpen] = useState(false);
 
   const fetchVolunteers = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -61,33 +63,57 @@ export default function VolunteersPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => fetchVolunteers(true)}
-          disabled={loading || refreshing}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-all cursor-pointer"
-          title="Refresh volunteers"
-        >
-          {refreshing ? (
-            <Spinner className="size-3.5" />
-          ) : (
+        <div className="flex items-center gap-2 self-start">
+          <button
+            id="btn-new-volunteer-registration"
+            onClick={() => setIsSpotModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-all cursor-pointer"
+            title="Register a new volunteer on the spot"
+          >
             <svg
-              width="14"
-              height="14"
+              width="15"
+              height="15"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-              <path d="M21 3v5h-5" />
-              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-              <path d="M8 16H3v5" />
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-          )}
-          Refresh
-        </button>
+            New Registration
+          </button>
+
+          <button
+            onClick={() => fetchVolunteers(true)}
+            disabled={loading || refreshing}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-all cursor-pointer"
+            title="Refresh volunteers"
+          >
+            {refreshing ? (
+              <Spinner className="size-3.5" />
+            ) : (
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M8 16H3v5" />
+              </svg>
+            )}
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Note banner */}
@@ -108,11 +134,11 @@ export default function VolunteersPage() {
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
         <div className="text-sm text-muted-foreground">
-          <strong className="text-foreground">Migration required:</strong> Apply{" "}
+          <strong className="text-foreground">Migration:</strong> Apply{" "}
           <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
-            migrations/001_checkin_volunteers.sql
+            migrations/003_volunteer_spot_registration.sql
           </code>{" "}
-          in your Supabase SQL editor to activate volunteer registrations.
+          in your Supabase SQL editor to ensure all volunteer spot registration tables and permissions are active.
         </div>
       </div>
 
@@ -138,28 +164,40 @@ export default function VolunteersPage() {
       ) : (
         <>
           {/* Stats bar */}
-          {volunteers.length > 0 && (
-            <div className="flex flex-wrap gap-4 rounded-xl border border-border bg-muted/20 px-4 py-3">
-              <div className="text-sm">
-                <span className="text-muted-foreground">Verified: </span>
-                <span className="font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
-                  {volunteers.filter((v) => v.is_verified).length}
-                </span>
-              </div>
-              <div className="hidden sm:block h-4 w-px bg-border self-center" />
-              <div className="text-sm">
-                <span className="text-muted-foreground">Pending: </span>
-                <span className="font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
-                  {volunteers.filter((v) => !v.is_verified).length}
-                </span>
-              </div>
+          <div className="flex flex-wrap gap-4 rounded-xl border border-border bg-muted/20 px-4 py-3">
+            <div className="text-sm">
+              <span className="text-muted-foreground">Verified: </span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                {volunteers.filter((v) => v.is_verified).length}
+              </span>
             </div>
-          )}
+            <div className="hidden sm:block h-4 w-px bg-border self-center" />
+            <div className="text-sm">
+              <span className="text-muted-foreground">Pending: </span>
+              <span className="font-semibold text-amber-600 dark:text-amber-400 tabular-nums">
+                {volunteers.filter((v) => !v.is_verified && v.registration_type === "ONLINE").length}
+              </span>
+            </div>
+            <div className="hidden sm:block h-4 w-px bg-border self-center" />
+            <div className="text-sm">
+              <span className="text-muted-foreground">Offline: </span>
+              <span className="font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
+                {volunteers.filter((v) => v.registration_type === "OFFLINE" || (v.registration_type as any) === "SPOT").length}
+              </span>
+            </div>
+          </div>
 
           {/* Table */}
           <VolunteersTable volunteers={volunteers} />
         </>
       )}
+
+      {/* Volunteer Spot Registration Modal */}
+      <VolunteerSpotRegistrationModal
+        open={isSpotModalOpen}
+        onOpenChange={setIsSpotModalOpen}
+        onSuccess={() => fetchVolunteers(true)}
+      />
     </div>
   );
 }

@@ -109,7 +109,7 @@ export function VolunteersTable({ volunteers }: VolunteersTableProps) {
         >
           <option value="ALL">All Types</option>
           <option value="ONLINE">Online</option>
-          <option value="SPOT">Spot</option>
+          <option value="OFFLINE">Offline</option>
         </select>
 
         <select
