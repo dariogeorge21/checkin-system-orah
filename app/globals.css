@@ -128,3 +128,18 @@
     @apply font-sans;
   }
 }
+
+@keyframes scanline {
+  0% {
+    top: 6%;
+    opacity: 0.7;
+  }
+  50% {
+    top: 92%;
+    opacity: 1;
+  }
+  100% {
+    top: 6%;
+    opacity: 0.7;
+  }
+}

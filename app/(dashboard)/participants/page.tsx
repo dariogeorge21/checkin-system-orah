@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { ParticipantsTable } from "@/components/participants/participants-table";
 import type { Participant } from "@/components/participants/participants-table";
 import { SpotRegistrationModal } from "@/components/participants/spot-registration-modal";
+import { TicketScannerModal } from "@/components/scanner/ticket-scanner-modal";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function ParticipantsPage() {
@@ -12,6 +13,7 @@ export default function ParticipantsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSpotModalOpen, setIsSpotModalOpen] = useState(false);
+  const [isTicketScannerOpen, setIsTicketScannerOpen] = useState(false);
 
   const fetchParticipants = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -60,11 +62,34 @@ export default function ParticipantsPage() {
 
         <div className="flex items-center gap-2 self-start">
           <button
+            id="btn-participants-scan-ticket"
+            onClick={() => setIsTicketScannerOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3.5 py-1.5 text-xs font-semibold text-primary shadow-2xs hover:bg-primary/20 transition-all cursor-pointer"
+            title="Scan participant ticket QR (Camera / Barcode Scanner)"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect width="14" height="14" x="5" y="5" rx="2" />
+              <path d="M9 9h6v6H9z" />
+            </svg>
+            Scan Ticket QR
+          </button>
+
+          <button
             id="btn-new-registration"
             onClick={() => setIsSpotModalOpen(true)}
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-all cursor-pointer"
             title="Register a new participant on the spot"
           >
+
             <svg
               width="15"
               height="15"
@@ -170,6 +195,14 @@ export default function ParticipantsPage() {
         onOpenChange={setIsSpotModalOpen}
         onSuccess={() => fetchParticipants(true)}
       />
+
+      {/* Ticket Scanner Modal */}
+      <TicketScannerModal
+        open={isTicketScannerOpen}
+        onOpenChange={setIsTicketScannerOpen}
+        onCheckinSuccess={() => fetchParticipants(true)}
+      />
     </div>
   );
 }
+

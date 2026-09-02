@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { UnifiedAttendee, RecentCheckinItem } from "@/components/checkin/checkin-types";
 import { CheckinModal } from "@/components/checkin/checkin-modal";
+import { TicketScannerModal } from "@/components/scanner/ticket-scanner-modal";
 import { SpotRegistrationModal } from "@/components/participants/spot-registration-modal";
 import { VolunteerSpotRegistrationModal } from "@/components/volunteers/volunteer-spot-registration-modal";
 import { Spinner } from "@/components/ui/spinner";
@@ -26,6 +27,9 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
   // Selected Attendee for CheckinModal
   const [selectedAttendee, setSelectedAttendee] = useState<UnifiedAttendee | null>(null);
   const [isCheckinModalOpen, setIsCheckinModalOpen] = useState(false);
+
+  // Ticket Scanner Modal
+  const [isTicketScannerOpen, setIsTicketScannerOpen] = useState(false);
 
   // Spot Modals
   const [isSpotParticipantModalOpen, setIsSpotParticipantModalOpen] = useState(false);
@@ -128,6 +132,28 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
           {/* Quick Spot Registration Actions */}
           <div className="flex flex-wrap items-center gap-2">
             <button
+              id="btn-station-scan-ticket"
+              onClick={() => setIsTicketScannerOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-[oklch(0.55_0.22_270)] to-[oklch(0.50_0.20_290)] px-4 py-2 text-xs font-bold text-white shadow-md hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer ring-2 ring-[oklch(0.55_0.22_270)]/30"
+              title="Scan participant ticket QR (Camera / Physical Barcode Scanner)"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect width="14" height="14" x="5" y="5" rx="2" />
+                <path d="M9 9h6v6H9z" />
+              </svg>
+              <span>📷 Scan Ticket QR</span>
+            </button>
+
+            <button
               id="btn-spot-participant"
               onClick={() => setIsSpotParticipantModalOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-2 text-xs font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-all cursor-pointer"
@@ -147,6 +173,7 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
               </svg>
               + Spot Participant
             </button>
+
 
             <button
               id="btn-spot-volunteer"
@@ -483,6 +510,13 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
         onOpenChange={setIsSpotVolunteerModalOpen}
         onSuccess={handleCheckinSuccess}
       />
+
+      <TicketScannerModal
+        open={isTicketScannerOpen}
+        onOpenChange={setIsTicketScannerOpen}
+        onCheckinSuccess={handleCheckinSuccess}
+      />
     </section>
   );
 }
+

@@ -8,6 +8,7 @@ import { logoutAction } from "@/features/auth/actions";
 import type { User } from "@supabase/supabase-js";
 
 import { CheckinCommandPalette } from "@/components/checkin/checkin-command-palette";
+import { TicketScannerModal } from "@/components/scanner/ticket-scanner-modal";
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   "/": { title: "Dashboard", subtitle: "Registration overview" },
@@ -47,13 +48,17 @@ export function AppHeader({ user }: { user: User }) {
   const page = pageTitles[pathname] ?? { title: "Orah", subtitle: "Campus Meet 2026" };
   const initials = user.email?.slice(0, 2).toUpperCase() ?? "??";
   const [isPaletteOpen, setIsPaletteOpen] = React.useState(false);
+  const [isScannerOpen, setIsScannerOpen] = React.useState(false);
 
-  // Global Ctrl+K / Cmd+K listener
+  // Global Ctrl+K (Quick Search) and Ctrl+S (Scan Ticket) listeners
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setIsPaletteOpen((prev) => !prev);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        setIsScannerOpen((prev) => !prev);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -77,6 +82,33 @@ export function AppHeader({ user }: { user: User }) {
 
         {/* Spacer */}
         <div className="flex-1" />
+
+        {/* Global Fast Scan Ticket QR Trigger */}
+        <button
+          id="header-scan-qr-btn"
+          type="button"
+          onClick={() => setIsScannerOpen(true)}
+          className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/20 px-3 py-1.5 text-xs text-primary font-semibold transition-all cursor-pointer shadow-2xs"
+          title="Scan participant ticket QR (Ctrl+S)"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect width="14" height="14" x="5" y="5" rx="2" />
+            <path d="M9 9h6v6H9z" />
+          </svg>
+          <span>Scan Ticket</span>
+          <kbd className="hidden md:inline rounded border border-primary/30 bg-primary/10 px-1 py-0.2 text-[9px] font-mono text-primary font-bold">
+            Ctrl S
+          </kbd>
+        </button>
 
         {/* Global Fast Search / Check-in Trigger */}
         <button
@@ -150,6 +182,13 @@ export function AppHeader({ user }: { user: User }) {
         open={isPaletteOpen}
         onOpenChange={setIsPaletteOpen}
       />
+
+      {/* Global Ticket Scanner Modal */}
+      <TicketScannerModal
+        open={isScannerOpen}
+        onOpenChange={setIsScannerOpen}
+      />
     </>
   );
 }
+

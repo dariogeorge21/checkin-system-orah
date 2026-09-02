@@ -23,6 +23,7 @@ interface CheckinModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (updatedAttendee: UnifiedAttendee) => void;
+  onScanNext?: () => void;
 }
 
 export function CheckinModal({
@@ -30,6 +31,7 @@ export function CheckinModal({
   open,
   onOpenChange,
   onSuccess,
+  onScanNext,
 }: CheckinModalProps) {
   const [paymentData, setPaymentData] = useState<CheckinPaymentData>({
     method: "UPI",
@@ -287,13 +289,43 @@ export function CheckinModal({
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 flex items-center gap-3">
+                {onScanNext && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleClose();
+                      onScanNext();
+                    }}
+                    className="inline-flex items-center gap-1.5 px-6 py-2.5 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer shadow-sm"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect width="14" height="14" x="5" y="5" rx="2" />
+                      <path d="M9 9h6v6H9z" />
+                    </svg>
+                    Scan Next Ticket
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="px-6 py-2.5 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer shadow-sm"
+                  className={cn(
+                    "px-6 py-2.5 text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-sm",
+                    onScanNext
+                      ? "border border-border bg-background text-foreground hover:bg-muted"
+                      : "bg-primary text-primary-foreground hover:bg-primary/90"
+                  )}
                 >
-                  Done (Next Attendee)
+                  {onScanNext ? "Close" : "Done (Next Attendee)"}
                 </button>
               </div>
             </div>
@@ -303,7 +335,7 @@ export function CheckinModal({
               {/* Attendee Info Card */}
               <div className="p-4 rounded-2xl border border-border bg-muted/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-base font-bold text-foreground">{attendee.name}</span>
                     <span
                       className={cn(
@@ -315,12 +347,21 @@ export function CheckinModal({
                     >
                       {attendee.registrationType}
                     </span>
+
+                    {(attendee.ticketId || attendee.ticket?.id) && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                        🎟️ Ticket #{String(attendee.ticketId || attendee.ticket?.id).slice(0, 8)}
+                      </span>
+                    )}
                   </div>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span className="font-mono text-foreground">{attendee.phone}</span>
                     {attendee.email && <span>• {attendee.email}</span>}
                     {(attendee.parish || attendee.ministry) && (
                       <span>• {attendee.parish || attendee.ministry}</span>
+                    )}
+                    {attendee.college && (
+                      <span>• {attendee.college}</span>
                     )}
                   </div>
                 </div>
@@ -332,6 +373,7 @@ export function CheckinModal({
                   <span className="text-xl font-extrabold text-foreground tabular-nums">₹600</span>
                 </div>
               </div>
+
 
               {/* Payment Method Selector */}
               <div className="space-y-2.5">
