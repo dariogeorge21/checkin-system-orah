@@ -40,6 +40,8 @@ export interface UnifiedAttendee {
   college?: string | null;
   institute?: string | null;
   year_of_study?: string | null;
+  gender?: string | null;
+  dob?: string | null;
   address?: string | null;
   registrationType: RegistrationType;
   createdAt: string;
@@ -47,6 +49,14 @@ export interface UnifiedAttendee {
   // Check-in status
   isCheckedIn: boolean;
   checkin?: CheckinRecord | null;
+
+  // Ticket metadata (if loaded via ticket QR code)
+  ticketId?: string | null;
+  ticket?: {
+    id: string;
+    issued_at?: string | null;
+    token_hash?: string | null;
+  } | null;
 }
 
 export interface RecentCheckinItem {
