@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { UnifiedAttendee, CheckinRecord, PaymentStatus } from "@/components/checkin/checkin-types";
+import { CheckinModal } from "@/components/checkin/checkin-modal";
 
 export type RegistrationType = "ONLINE" | "OFFLINE";
 
@@ -22,6 +24,7 @@ export interface Participant {
   registration_type: RegistrationType;
   is_verified: boolean;
   created_at: string;
+  checkin?: CheckinRecord | null;
 }
 
 const REGISTRATION_TYPE_LABELS: Record<string, string> = {
@@ -45,38 +48,51 @@ function RegistrationTypeBadge({ type }: { type: RegistrationType }) {
   );
 }
 
-function VerifiedBadge({ is_verified }: { is_verified: boolean }) {
+function VerifiedBadge({ is_verified, checkin }: { is_verified: boolean; checkin?: CheckinRecord | null }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-        is_verified
-          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-          : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-      )}
-    >
+    <div className="space-y-0.5">
       <span
         className={cn(
-          "size-1.5 rounded-full",
-          is_verified ? "bg-emerald-500" : "bg-amber-500"
+          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+          is_verified
+            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+            : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
         )}
-      />
-      {is_verified ? "Verified" : "Pending"}
-    </span>
+      >
+        <span
+          className={cn(
+            "size-1.5 rounded-full",
+            is_verified ? "bg-emerald-500" : "bg-amber-500"
+          )}
+        />
+        {is_verified ? "Verified" : "Pending"}
+      </span>
+      {is_verified && checkin && (
+        <span className="block text-[10px] text-muted-foreground font-medium">
+          {checkin.payment_method || "Paid"} • ₹{checkin.amount_paid}
+        </span>
+      )}
+    </div>
   );
 }
 
 interface ParticipantsTableProps {
   participants: Participant[];
+  onParticipantUpdated?: () => void;
 }
 
 const PAGE_SIZE = 20;
 
-export function ParticipantsTable({ participants }: ParticipantsTableProps) {
+export function ParticipantsTable({ participants, onParticipantUpdated }: ParticipantsTableProps) {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"ALL" | RegistrationType>("ALL");
   const [filterStatus, setFilterStatus] = useState<"ALL" | "verified" | "pending">("ALL");
+  const [filterPayment, setFilterPayment] = useState<"ALL" | PaymentStatus>("ALL");
   const [page, setPage] = useState(1);
+
+  // Checkin modal state
+  const [selectedAttendee, setSelectedAttendee] = useState<UnifiedAttendee | null>(null);
+  const [isCheckinModalOpen, setIsCheckinModalOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return participants.filter((p) => {
@@ -93,9 +109,13 @@ export function ParticipantsTable({ participants }: ParticipantsTableProps) {
         filterStatus === "ALL" ||
         (filterStatus === "verified" && p.is_verified) ||
         (filterStatus === "pending" && !p.is_verified);
-      return matchesSearch && matchesType && matchesStatus;
+      const matchesPayment =
+        filterPayment === "ALL" ||
+        (p.checkin && p.checkin.payment_status === filterPayment) ||
+        (!p.checkin && filterPayment === "not_paid");
+      return matchesSearch && matchesType && matchesStatus && matchesPayment;
     });
-  }, [participants, search, filterType, filterStatus]);
+  }, [participants, search, filterType, filterStatus, filterPayment]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -103,6 +123,29 @@ export function ParticipantsTable({ participants }: ParticipantsTableProps) {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
     setPage(1);
+  };
+
+  const handleOpenCheckin = (p: Participant) => {
+    const attendee: UnifiedAttendee = {
+      id: p.id,
+      personType: "participant",
+      name: p.name,
+      phone: p.phone,
+      email: p.email,
+      parish: p.parish,
+      diocese: p.diocese,
+      affiliation: p.affiliation,
+      college: p.college,
+      institute: p.institute,
+      year_of_study: p.year_of_study,
+      address: p.address,
+      registrationType: p.registration_type,
+      createdAt: p.created_at,
+      isCheckedIn: p.is_verified,
+      checkin: p.checkin,
+    };
+    setSelectedAttendee(attendee);
+    setIsCheckinModalOpen(true);
   };
 
   return (
@@ -151,6 +194,20 @@ export function ParticipantsTable({ participants }: ParticipantsTableProps) {
           <option value="pending">Pending</option>
         </select>
 
+        {/* Payment filter */}
+        <select
+          id="filter-payment"
+          value={filterPayment}
+          onChange={(e) => { setFilterPayment(e.target.value as typeof filterPayment); setPage(1); }}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[oklch(0.55_0.22_270)]/30 transition-all"
+        >
+          <option value="ALL">All Payments</option>
+          <option value="paid">Paid (₹600)</option>
+          <option value="partially_paid">Partial</option>
+          <option value="later_pay">Pay Later</option>
+          <option value="not_paid">Unpaid</option>
+        </select>
+
         {/* Result count */}
         <span className="ml-auto text-xs text-muted-foreground">
           {filtered.length} result{filtered.length !== 1 ? "s" : ""}
@@ -170,7 +227,7 @@ export function ParticipantsTable({ participants }: ParticipantsTableProps) {
                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden lg:table-cell">Affiliation</th>
                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Type</th>
                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden xl:table-cell">Registered</th>
+                <th className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -210,14 +267,26 @@ export function ParticipantsTable({ participants }: ParticipantsTableProps) {
                       <RegistrationTypeBadge type={p.registration_type} />
                     </td>
                     <td className="px-4 py-3">
-                      <VerifiedBadge is_verified={p.is_verified} />
+                      <VerifiedBadge is_verified={p.is_verified} checkin={p.checkin} />
                     </td>
-                    <td className="px-4 py-3 hidden xl:table-cell text-xs text-muted-foreground tabular-nums">
-                      {new Date(p.created_at).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
+                    <td className="px-4 py-3 text-center">
+                      {p.is_verified ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCheckin(p)}
+                          className="px-2.5 py-1 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                        >
+                          View / Edit
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCheckin(p)}
+                          className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer shadow-2xs"
+                        >
+                          Check In
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -238,7 +307,7 @@ export function ParticipantsTable({ participants }: ParticipantsTableProps) {
               id="prev-page"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
             >
               Previous
             </button>
@@ -246,13 +315,23 @@ export function ParticipantsTable({ participants }: ParticipantsTableProps) {
               id="next-page"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
             >
               Next
             </button>
           </div>
         </div>
       )}
+
+      {/* Checkin Modal */}
+      <CheckinModal
+        attendee={selectedAttendee}
+        open={isCheckinModalOpen}
+        onOpenChange={setIsCheckinModalOpen}
+        onSuccess={() => {
+          if (onParticipantUpdated) onParticipantUpdated();
+        }}
+      />
     </div>
   );
 }

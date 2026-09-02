@@ -157,7 +157,10 @@ export default function ParticipantsPage() {
           </div>
 
           {/* Table */}
-          <ParticipantsTable participants={participants} />
+          <ParticipantsTable
+            participants={participants}
+            onParticipantUpdated={() => fetchParticipants(true)}
+          />
         </>
       )}
 

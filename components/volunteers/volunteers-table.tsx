@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { UnifiedAttendee, CheckinRecord, PaymentStatus } from "@/components/checkin/checkin-types";
+import { CheckinModal } from "@/components/checkin/checkin-modal";
 
 export type VolunteerRegistrationType = "ONLINE" | "OFFLINE" | "SPOT";
 
@@ -14,21 +16,29 @@ export interface VolunteerRegistration {
   registration_type: VolunteerRegistrationType;
   is_verified: boolean;
   created_at: string;
+  checkin?: CheckinRecord | null;
 }
 
-function VerifiedBadge({ is_verified }: { is_verified: boolean }) {
+function VerifiedBadge({ is_verified, checkin }: { is_verified: boolean; checkin?: CheckinRecord | null }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-        is_verified
-          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-          : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+    <div className="space-y-0.5">
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+          is_verified
+            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+            : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
+        )}
+      >
+        <span className={cn("size-1.5 rounded-full", is_verified ? "bg-emerald-500" : "bg-amber-500")} />
+        {is_verified ? "Verified" : "Pending"}
+      </span>
+      {is_verified && checkin && (
+        <span className="block text-[10px] text-muted-foreground font-medium">
+          {checkin.payment_method || "Paid"} • ₹{checkin.amount_paid}
+        </span>
       )}
-    >
-      <span className={cn("size-1.5 rounded-full", is_verified ? "bg-emerald-500" : "bg-amber-500")} />
-      {is_verified ? "Verified" : "Pending"}
-    </span>
+    </div>
   );
 }
 
@@ -51,13 +61,19 @@ const PAGE_SIZE = 20;
 
 interface VolunteersTableProps {
   volunteers: VolunteerRegistration[];
+  onVolunteerUpdated?: () => void;
 }
 
-export function VolunteersTable({ volunteers }: VolunteersTableProps) {
+export function VolunteersTable({ volunteers, onVolunteerUpdated }: VolunteersTableProps) {
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"ALL" | VolunteerRegistrationType>("ALL");
   const [filterStatus, setFilterStatus] = useState<"ALL" | "verified" | "pending">("ALL");
+  const [filterPayment, setFilterPayment] = useState<"ALL" | PaymentStatus>("ALL");
   const [page, setPage] = useState(1);
+
+  // Checkin modal state
+  const [selectedAttendee, setSelectedAttendee] = useState<UnifiedAttendee | null>(null);
+  const [isCheckinModalOpen, setIsCheckinModalOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return volunteers.filter((v) => {
@@ -73,12 +89,33 @@ export function VolunteersTable({ volunteers }: VolunteersTableProps) {
         filterStatus === "ALL" ||
         (filterStatus === "verified" && v.is_verified) ||
         (filterStatus === "pending" && !v.is_verified);
-      return matchesSearch && matchesType && matchesStatus;
+      const matchesPayment =
+        filterPayment === "ALL" ||
+        (v.checkin && v.checkin.payment_status === filterPayment) ||
+        (!v.checkin && filterPayment === "not_paid");
+      return matchesSearch && matchesType && matchesStatus && matchesPayment;
     });
-  }, [volunteers, search, filterType, filterStatus]);
+  }, [volunteers, search, filterType, filterStatus, filterPayment]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const handleOpenCheckin = (v: VolunteerRegistration) => {
+    const attendee: UnifiedAttendee = {
+      id: v.id,
+      personType: "volunteer",
+      name: v.name,
+      phone: v.phone,
+      ministry: v.ministry,
+      role: v.role,
+      registrationType: v.registration_type,
+      createdAt: v.created_at,
+      isCheckedIn: v.is_verified,
+      checkin: v.checkin,
+    };
+    setSelectedAttendee(attendee);
+    setIsCheckinModalOpen(true);
+  };
 
   return (
     <div className="space-y-4">
@@ -123,6 +160,19 @@ export function VolunteersTable({ volunteers }: VolunteersTableProps) {
           <option value="pending">Pending</option>
         </select>
 
+        <select
+          id="volunteers-filter-payment"
+          value={filterPayment}
+          onChange={(e) => { setFilterPayment(e.target.value as typeof filterPayment); setPage(1); }}
+          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[oklch(0.55_0.22_270)]/30 transition-all"
+        >
+          <option value="ALL">All Payments</option>
+          <option value="paid">Paid (₹600)</option>
+          <option value="partially_paid">Partial</option>
+          <option value="later_pay">Pay Later</option>
+          <option value="not_paid">Unpaid</option>
+        </select>
+
         <span className="ml-auto text-xs text-muted-foreground">
           {filtered.length} result{filtered.length !== 1 ? "s" : ""}
         </span>
@@ -141,7 +191,7 @@ export function VolunteersTable({ volunteers }: VolunteersTableProps) {
                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Role</th>
                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Type</th>
                 <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hidden xl:table-cell">Registered</th>
+                <th className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -185,14 +235,26 @@ export function VolunteersTable({ volunteers }: VolunteersTableProps) {
                       <RegistrationTypeBadge type={v.registration_type} />
                     </td>
                     <td className="px-4 py-3">
-                      <VerifiedBadge is_verified={v.is_verified} />
+                      <VerifiedBadge is_verified={v.is_verified} checkin={v.checkin} />
                     </td>
-                    <td className="px-4 py-3 hidden xl:table-cell text-xs text-muted-foreground tabular-nums">
-                      {new Date(v.created_at).toLocaleDateString("en-IN", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
+                    <td className="px-4 py-3 text-center">
+                      {v.is_verified ? (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCheckin(v)}
+                          className="px-2.5 py-1 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                        >
+                          View / Edit
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCheckin(v)}
+                          className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer shadow-2xs"
+                        >
+                          Check In
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -212,7 +274,7 @@ export function VolunteersTable({ volunteers }: VolunteersTableProps) {
               id="volunteers-prev-page"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
             >
               Previous
             </button>
@@ -220,13 +282,23 @@ export function VolunteersTable({ volunteers }: VolunteersTableProps) {
               id="volunteers-next-page"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
             >
               Next
             </button>
           </div>
         </div>
       )}
+
+      {/* Checkin Modal */}
+      <CheckinModal
+        attendee={selectedAttendee}
+        open={isCheckinModalOpen}
+        onOpenChange={setIsCheckinModalOpen}
+        onSuccess={() => {
+          if (onVolunteerUpdated) onVolunteerUpdated();
+        }}
+      />
     </div>
   );
 }

@@ -188,7 +188,10 @@ export default function VolunteersPage() {
           </div>
 
           {/* Table */}
-          <VolunteersTable volunteers={volunteers} />
+          <VolunteersTable
+            volunteers={volunteers}
+            onVolunteerUpdated={() => fetchVolunteers(true)}
+          />
         </>
       )}
 

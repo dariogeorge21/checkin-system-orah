@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { KpiCard } from "@/components/dashboard/kpi-card";
+import { FastCheckinStation } from "@/components/dashboard/fast-checkin-station";
 
 async function getDashboardStats() {
   const supabase = await createClient();
@@ -82,6 +83,9 @@ export default async function DashboardPage() {
           </span>
         </div>
       </div>
+
+      {/* Front Desk Fast Check-in & Fee Collection Station */}
+      <FastCheckinStation />
 
       {/* Participants KPIs */}
       <section>
