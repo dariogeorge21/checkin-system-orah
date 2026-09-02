@@ -789,10 +789,138 @@ export function SpotRegistrationModal({
                 </div>
               </div>
 
-              {/* Payment Method Tabs */}
+              {/* 1. Payment Status Selector */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    1. Payment Status
+                  </label>
+                  <div className="flex items-center gap-2 text-xs font-medium">
+                    <span className="text-muted-foreground">
+                      Collected: <strong className="text-emerald-600 dark:text-emerald-400 tabular-nums">₹{paymentData.amountPaid}</strong>
+                    </span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">
+                      Due: <strong className={cn("tabular-nums", paymentData.amountDue > 0 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-foreground")}>₹{paymentData.amountDue}</strong>
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handlePaymentStatusChange("paid")}
+                    className={cn(
+                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
+                      paymentData.status === "paid"
+                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30 font-bold"
+                        : "border-border bg-background hover:bg-muted/40 text-foreground"
+                    )}
+                  >
+                    ✓ Full Paid (₹600)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePaymentStatusChange("partially_paid")}
+                    className={cn(
+                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
+                      paymentData.status === "partially_paid"
+                        ? "border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30 font-bold"
+                        : "border-border bg-background hover:bg-muted/40 text-foreground"
+                    )}
+                  >
+                    Half Paid (₹300)
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePaymentStatusChange("later_pay")}
+                    className={cn(
+                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
+                      paymentData.status === "later_pay"
+                        ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-2 ring-amber-500/30 font-bold"
+                        : "border-border bg-background hover:bg-muted/40 text-foreground"
+                    )}
+                  >
+                    Pay Later
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handlePaymentStatusChange("not_paid")}
+                    className={cn(
+                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
+                      paymentData.status === "not_paid"
+                        ? "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/30 font-bold"
+                        : "border-border bg-background hover:bg-muted/40 text-foreground"
+                    )}
+                  >
+                    Unpaid
+                  </button>
+                </div>
+              </div>
+
+              {/* Partial Amount Input */}
+              {paymentData.status === "partially_paid" && (
+                <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label
+                      htmlFor="spot-partial-amount"
+                      className="text-xs font-semibold text-foreground"
+                    >
+                      Amount Collected (₹)
+                    </label>
+                    <span className="text-xs text-muted-foreground">
+                      Balance Due:{" "}
+                      <span className="font-bold text-destructive tabular-nums">
+                        ₹{paymentData.amountDue}
+                      </span>
+                    </span>
+                  </div>
+
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">
+                      ₹
+                    </span>
+                    <input
+                      id="spot-partial-amount"
+                      type="number"
+                      min={1}
+                      max={599}
+                      value={paymentData.amountPaid || ""}
+                      onChange={(e) => handlePartialAmountChange(e.target.value)}
+                      placeholder="Enter amount collected"
+                      className="w-full rounded-lg border border-border bg-background pl-8 pr-4 py-2 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+
+                  {/* Quick partial chips */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-muted-foreground">Quick set:</span>
+                    {[100, 200, 300, 500].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        onClick={() => handlePartialAmountChange(String(amt))}
+                        className={cn(
+                          "px-2.5 py-1 text-[11px] font-semibold rounded-md border cursor-pointer transition-all",
+                          paymentData.amountPaid === amt
+                            ? "border-blue-500 bg-blue-500 text-white shadow-xs"
+                            : "border-border bg-background hover:bg-muted"
+                        )}
+                      >
+                        ₹{amt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 2. Payment Method Selector */}
               <div className="space-y-3">
                 <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Select Payment Method
+                  2. Select Payment Method
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -850,129 +978,23 @@ export function SpotRegistrationModal({
                 </div>
               </div>
 
-              {/* Dynamic UPI QR Code (When UPI is selected) */}
+              {/* 3. Dynamic UPI QR Code (When UPI is selected) */}
               {paymentData.method === "UPI" && (
-                <PaymentQrCode
-                  amount={paymentData.amountPaid > 0 ? paymentData.amountPaid : 600}
-                  note={`${formData.name.slice(0, 15)} Spot Reg`}
-                />
-              )}
-
-              {/* Payment Status Selector */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Payment Status
-                  </label>
-                  <span className="text-xs font-medium text-foreground">
-                    Due: <strong className="tabular-nums">₹{paymentData.amountDue}</strong>
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentStatusChange("paid")}
-                    className={cn(
-                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
-                      paymentData.status === "paid"
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30"
-                        : "border-border bg-background hover:bg-muted/40 text-foreground"
-                    )}
-                  >
-                    ✓ Paid (₹600)
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentStatusChange("partially_paid")}
-                    className={cn(
-                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
-                      paymentData.status === "partially_paid"
-                        ? "border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30"
-                        : "border-border bg-background hover:bg-muted/40 text-foreground"
-                    )}
-                  >
-                    Partial Payment
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentStatusChange("later_pay")}
-                    className={cn(
-                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
-                      paymentData.status === "later_pay"
-                        ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-2 ring-amber-500/30"
-                        : "border-border bg-background hover:bg-muted/40 text-foreground"
-                    )}
-                  >
-                    Pay Later
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentStatusChange("not_paid")}
-                    className={cn(
-                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
-                      paymentData.status === "not_paid"
-                        ? "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/30"
-                        : "border-border bg-background hover:bg-muted/40 text-foreground"
-                    )}
-                  >
-                    Unpaid
-                  </button>
-                </div>
-              </div>
-
-              {/* Partial Amount Input */}
-              {paymentData.status === "partially_paid" && (
-                <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="spot-partial-amount"
-                      className="text-xs font-semibold text-foreground"
-                    >
-                      Amount Collected (₹)
-                    </label>
-                    <span className="text-xs text-muted-foreground">
-                      Balance Due:{" "}
-                      <span className="font-bold text-destructive tabular-nums">
-                        ₹{paymentData.amountDue}
-                      </span>
-                    </span>
+                paymentData.amountPaid > 0 ? (
+                  <PaymentQrCode
+                    amount={paymentData.amountPaid}
+                    note={`${formData.name.slice(0, 15)} Spot Reg`}
+                  />
+                ) : (
+                  <div className="p-4 rounded-2xl border border-dashed border-amber-500/40 bg-amber-500/5 text-center space-y-1">
+                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                      Pay Later / Unpaid Selected (₹0 Due Now)
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      No UPI QR payment required right now. The ₹600 registration fee balance is recorded as due.
+                    </p>
                   </div>
-
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">
-                      ₹
-                    </span>
-                    <input
-                      id="spot-partial-amount"
-                      type="number"
-                      min={1}
-                      max={599}
-                      value={paymentData.amountPaid || ""}
-                      onChange={(e) => handlePartialAmountChange(e.target.value)}
-                      placeholder="Enter amount collected"
-                      className="w-full rounded-lg border border-border bg-background pl-8 pr-4 py-2 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                    />
-                  </div>
-
-                  {/* Quick partial chips */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-muted-foreground">Quick set:</span>
-                    {[100, 200, 300, 500].map((amt) => (
-                      <button
-                        key={amt}
-                        type="button"
-                        onClick={() => handlePartialAmountChange(String(amt))}
-                        className="px-2.5 py-1 text-[11px] font-semibold rounded-md border border-border bg-background hover:bg-muted cursor-pointer"
-                      >
-                        ₹{amt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                )
               )}
 
               {/* Payment Notes */}
