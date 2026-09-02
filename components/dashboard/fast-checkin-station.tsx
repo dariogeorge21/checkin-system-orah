@@ -150,7 +150,7 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
                 <rect width="14" height="14" x="5" y="5" rx="2" />
                 <path d="M9 9h6v6H9z" />
               </svg>
-              <span>📷 Scan Ticket QR</span>
+              <span>Scan Ticket QR</span>
             </button>
 
             <button
