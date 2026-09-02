@@ -31,6 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         figtree.variable
       )}
     >
+      <head><meta name="apple-mobile-web-app-title" content="CheckIn Orah" /></head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider
           attribute="class"
