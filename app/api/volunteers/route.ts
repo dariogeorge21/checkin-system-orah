@@ -9,7 +9,7 @@ export async function GET() {
     const { data, error } = await supabase
       .from("volunteer_registrations")
       .select(
-        "id, name, phone, ministry, role, registration_type, created_at, checkins(id)"
+        "id, name, phone, ministry, role, registration_type, created_at, checkins(id, payment_status, payment_method, amount_paid, amount_due, payment_note, checked_in_at)"
       )
       .order("created_at", { ascending: false });
 
@@ -19,16 +19,31 @@ export async function GET() {
       return NextResponse.json({ volunteers: [], error: error.message }, { status: 200 });
     }
 
-    const volunteers: VolunteerRegistration[] = (data ?? []).map((row) => ({
-      id: row.id,
-      name: row.name,
-      phone: row.phone,
-      ministry: row.ministry,
-      role: row.role,
-      registration_type: row.registration_type,
-      created_at: row.created_at,
-      is_verified: Array.isArray(row.checkins) && row.checkins.length > 0,
-    }));
+    const volunteers: VolunteerRegistration[] = (data ?? []).map((row) => {
+      const checkinList = Array.isArray(row.checkins) ? row.checkins : row.checkins ? [row.checkins] : [];
+      const chk = checkinList[0] || null;
+      return {
+        id: row.id,
+        name: row.name,
+        phone: row.phone,
+        ministry: row.ministry,
+        role: row.role,
+        registration_type: row.registration_type,
+        created_at: row.created_at,
+        is_verified: !!chk,
+        checkin: chk
+          ? {
+              id: chk.id,
+              payment_status: chk.payment_status,
+              payment_method: chk.payment_method,
+              amount_paid: Number(chk.amount_paid) || 0,
+              amount_due: Number(chk.amount_due) || 0,
+              payment_note: chk.payment_note,
+              checked_in_at: chk.checked_in_at,
+            }
+          : null,
+      };
+    });
 
     return NextResponse.json({ volunteers });
   } catch (err) {
