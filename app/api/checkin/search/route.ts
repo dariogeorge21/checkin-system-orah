@@ -34,7 +34,7 @@ export async function GET(req: Request) {
 
     // 2. Fetch Participants (if applicable)
     let participants: any[] = [];
-    if (filter !== "volunteers") {
+    if (filter !== "volunteers" && filter !== "resources") {
       let pQuery = dbClient
         .from("registrations")
         .select(
@@ -63,7 +63,7 @@ export async function GET(req: Request) {
 
     // 3. Fetch Volunteers (if applicable)
     let volunteers: any[] = [];
-    if (filter !== "participants") {
+    if (filter !== "participants" && filter !== "resources") {
       let vQuery = dbClient
         .from("volunteer_registrations")
         .select(
@@ -86,6 +86,32 @@ export async function GET(req: Request) {
       const { data, error: vErr } = await vQuery.limit(limit);
       if (!vErr && data) {
         volunteers = data;
+      }
+    }
+
+    // 3b. Fetch Resources (if applicable)
+    let resources: any[] = [];
+    if (filter !== "participants" && filter !== "volunteers") {
+      let rQuery = dbClient
+        .from("resource_registrations")
+        .select("id, name, phone, from_location, session, registration_type, is_checked_in, checked_in_at, created_at")
+        .order("created_at", { ascending: false });
+
+      if (cleanQuery) {
+        if (phoneQuery.length >= 3) {
+          rQuery = rQuery.or(
+            `name.ilike.%${cleanQuery}%,phone.ilike.%${phoneQuery}%,from_location.ilike.%${cleanQuery}%,session.ilike.%${cleanQuery}%`
+          );
+        } else {
+          rQuery = rQuery.or(
+            `name.ilike.%${cleanQuery}%,from_location.ilike.%${cleanQuery}%,session.ilike.%${cleanQuery}%`
+          );
+        }
+      }
+
+      const { data, error: rErr } = await rQuery.limit(limit);
+      if (!rErr && data) {
+        resources = data;
       }
     }
 
@@ -163,6 +189,41 @@ export async function GET(req: Request) {
               payment_note: primaryCheckin.payment_note || null,
               checked_in_at: primaryCheckin.checked_in_at,
               checked_in_by: primaryCheckin.checked_in_by,
+            }
+          : null,
+      });
+    }
+
+    // Map resources
+    for (const r of resources) {
+      const isCheckedIn = !!r.is_checked_in;
+
+      // Apply status filter
+      if (filter === "pending" && isCheckedIn) continue;
+      if (filter === "verified" && !isCheckedIn) continue;
+
+      unifiedResults.push({
+        id: r.id,
+        personType: "resource",
+        name: r.name,
+        phone: r.phone || "—",
+        session: r.session || null,
+        fromLocation: r.from_location || null,
+        role: r.session ? `Session: ${r.session}` : "Resource Person",
+        parish: r.from_location || null,
+        isFeeExempt: true,
+        registrationType: (r.registration_type as any) || "SPOT",
+        createdAt: r.created_at,
+        isCheckedIn,
+        checkin: isCheckedIn
+          ? {
+              id: `res-${r.id}`,
+              payment_status: "paid",
+              amount_paid: 0,
+              amount_due: 0,
+              payment_method: null,
+              payment_note: "No Fee Collection (Resource)",
+              checked_in_at: r.checked_in_at,
             }
           : null,
       });

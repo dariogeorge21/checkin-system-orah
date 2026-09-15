@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     const paymentData: CheckinPaymentData = body.paymentData;
     const registrationOption: string = body.registrationOption || "full";
 
-    if (!personType || !registrationId || !paymentData) {
+    if (!personType || !registrationId || (!paymentData && personType !== "resource")) {
       return NextResponse.json(
         { error: "Missing required fields: personType, registrationId, or paymentData." },
         { status: 400 }
@@ -46,6 +46,45 @@ export async function POST(req: Request) {
       dbClient = createAdminClient();
     } catch {
       dbClient = supabase;
+    }
+
+    // Handle Resource Person check-in directly (NO FEE COLLECTION)
+    if (personType === "resource") {
+      const { data: resource, error: rErr } = await dbClient
+        .from("resource_registrations")
+        .update({
+          is_checked_in: true,
+          checked_in_at: new Date().toISOString(),
+          checked_in_by: user.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", registrationId)
+        .select("*")
+        .single();
+
+      if (rErr || !resource) {
+        return NextResponse.json(
+          { error: rErr?.message || "Resource registration not found." },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "Resource person checked in successfully with no fee.",
+        person: resource,
+        checkin: {
+          id: `res-${resource.id}`,
+          registration_id: resource.id,
+          payment_status: "paid",
+          payment_method: null,
+          amount_paid: 0,
+          amount_due: 0,
+          payment_note: "No Fee Collection (Resource)",
+          checked_in_at: resource.checked_in_at,
+          checked_in_by: user.id,
+        },
+      });
     }
 
     // 3. Resolve active event ID
@@ -244,6 +283,25 @@ export async function DELETE(req: Request) {
       dbClient = createAdminClient();
     } catch {
       dbClient = supabase;
+    }
+
+    if (checkinId.startsWith("res-")) {
+      const resourceId = checkinId.replace(/^res-/, "");
+      const { error: resErr } = await dbClient
+        .from("resource_registrations")
+        .update({
+          is_checked_in: false,
+          checked_in_at: null,
+          checked_in_by: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", resourceId);
+
+      if (resErr) {
+        return NextResponse.json({ error: resErr.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, message: "Resource check-in reverted successfully." });
     }
 
     const { error: delErr } = await dbClient

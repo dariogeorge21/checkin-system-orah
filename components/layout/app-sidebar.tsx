@@ -20,6 +20,7 @@ import {
   DashboardSquare01Icon,
   UserGroupIcon,
   HandshakeIcon,
+  TeacherIcon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +42,12 @@ const navItems = [
     href: "/volunteers",
     icon: HandshakeIcon,
     id: "nav-volunteers",
+  },
+  {
+    label: "Resources",
+    href: "/resources",
+    icon: TeacherIcon,
+    id: "nav-resources",
   },
 ];
 

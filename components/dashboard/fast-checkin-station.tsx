@@ -6,6 +6,7 @@ import { CheckinModal } from "@/components/checkin/checkin-modal";
 import { TicketScannerModal } from "@/components/scanner/ticket-scanner-modal";
 import { SpotRegistrationModal } from "@/components/participants/spot-registration-modal";
 import { VolunteerSpotRegistrationModal } from "@/components/volunteers/volunteer-spot-registration-modal";
+import { ResourceRegistrationModal } from "@/components/resources/resource-registration-modal";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +16,7 @@ interface FastCheckinStationProps {
 
 export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) {
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "pending" | "participants" | "volunteers" | "verified">("pending");
+  const [filter, setFilter] = useState<"all" | "pending" | "participants" | "volunteers" | "resources" | "verified">("pending");
   const [results, setResults] = useState<UnifiedAttendee[]>([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -34,6 +35,7 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
   // Spot Modals
   const [isSpotParticipantModalOpen, setIsSpotParticipantModalOpen] = useState(false);
   const [isSpotVolunteerModalOpen, setIsSpotVolunteerModalOpen] = useState(false);
+  const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
 
   // Fetch search results
   const fetchSearchResults = useCallback(async (q: string, f: string) => {
@@ -95,6 +97,25 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
     setIsCheckinModalOpen(true);
   };
 
+  const handleDirectResourceCheckin = async (attendee: UnifiedAttendee) => {
+    try {
+      const res = await fetch("/api/checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          personType: "resource",
+          registrationId: attendee.id,
+          registrationOption: "full",
+        }),
+      });
+      if (res.ok) {
+        handleCheckinSuccess();
+      }
+    } catch (err) {
+      console.error("Error checking in resource:", err);
+    }
+  };
+
   return (
     <section className="space-y-6">
       {/* Front Desk Header Card */}
@@ -125,7 +146,7 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
               </h3>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              Instant search for online & offline attendees. 1-click ₹600 fee collection & check-in.
+              Instant search for online & offline attendees. 1-click fee collection & check-in.
             </p>
           </div>
 
@@ -174,7 +195,6 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
               + Spot Participant
             </button>
 
-
             <button
               id="btn-spot-volunteer"
               onClick={() => setIsSpotVolunteerModalOpen(true)}
@@ -195,6 +215,28 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
                 <polyline points="17 11 19 13 23 9" />
               </svg>
               + Spot Volunteer
+            </button>
+
+            <button
+              id="btn-spot-resource"
+              onClick={() => setIsResourceModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-all cursor-pointer"
+              title="Register a resource person / speaker on the spot (No fee collection)"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              + Resource Registration
             </button>
           </div>
         </div>
@@ -221,7 +263,7 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
             <input
               id="fast-checkin-search"
               type="search"
-              placeholder="Search by Phone number (e.g. 9847...), Name, Email, or Parish…"
+              placeholder="Search by Phone number (e.g. 9847...), Name, Email, Parish, Session, or From…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full rounded-2xl border-2 border-border/80 bg-background/90 pl-11 pr-24 py-3.5 text-base font-medium text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:border-[oklch(0.55_0.22_270)] focus:ring-4 focus:ring-[oklch(0.55_0.22_270)]/15 shadow-sm transition-all"
@@ -252,6 +294,7 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
                 { id: "all", label: "All Attendees", count: undefined },
                 { id: "participants", label: "Participants", count: undefined },
                 { id: "volunteers", label: "Volunteers", count: undefined },
+                { id: "resources", label: "Resources", count: undefined },
                 { id: "verified", label: "Checked In", count: undefined },
               ].map((chip) => (
                 <button
@@ -342,10 +385,16 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
                         "size-10 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 shadow-inner mt-0.5",
                         item.personType === "participant"
                           ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
-                          : "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20"
+                          : item.personType === "volunteer"
+                          ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
                       )}
                     >
-                      {item.personType === "participant" ? "PART" : "VOL"}
+                      {item.personType === "participant"
+                        ? "PART"
+                        : item.personType === "volunteer"
+                        ? "VOL"
+                        : "RES"}
                     </div>
 
                     <div className="space-y-1 min-w-0">
@@ -356,13 +405,21 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
                         <span
                           className={cn(
                             "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                            item.registrationType === "ONLINE"
+                            item.personType === "resource"
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                              : item.registrationType === "ONLINE"
                               ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
                               : "bg-violet-500/10 text-violet-600 dark:text-violet-400"
                           )}
                         >
-                          {item.registrationType}
+                          {item.personType === "resource" ? "RESOURCE" : item.registrationType}
                         </span>
+
+                        {item.personType === "resource" && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                            No Fee Collection
+                          </span>
+                        )}
 
                         {item.role && item.role !== "member" && (
                           <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
@@ -376,8 +433,13 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
                           {item.phone}
                         </span>
                         {item.email && <span className="truncate">{item.email}</span>}
-                        {(item.parish || item.ministry) && (
-                          <span className="truncate">📍 {item.parish || item.ministry}</span>
+                        {item.session && (
+                          <span className="truncate font-semibold text-primary">
+                            🎤 {item.session}
+                          </span>
+                        )}
+                        {(item.fromLocation || item.parish || item.ministry) && (
+                          <span className="truncate">📍 {item.fromLocation || item.parish || item.ministry}</span>
                         )}
                       </div>
                     </div>
@@ -393,19 +455,44 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
                             ✓ Checked In
                           </span>
                           <span className="block text-[10px] text-muted-foreground mt-0.5 font-medium">
-                            {item.checkin?.payment_method || "Paid"} • ₹{item.checkin?.amount_paid ?? 600}
+                            {item.personType === "resource"
+                              ? "No Fee Collection (Exempt)"
+                              : `${item.checkin?.payment_method || "Paid"} • ₹${item.checkin?.amount_paid ?? 600}`}
                           </span>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => handleOpenCheckin(item)}
-                          className="px-2.5 py-1.5 rounded-xl border border-border bg-background hover:bg-muted text-xs font-medium text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-                          title="View / Edit Check-in"
-                        >
-                          Edit
-                        </button>
+                        {item.personType !== "resource" ? (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenCheckin(item)}
+                            className="px-2.5 py-1.5 rounded-xl border border-border bg-background hover:bg-muted text-xs font-medium text-muted-foreground hover:text-foreground transition-all cursor-pointer"
+                            title="View / Edit Check-in"
+                          >
+                            Edit
+                          </button>
+                        ) : null}
                       </div>
+                    ) : item.personType === "resource" ? (
+                      <button
+                        type="button"
+                        onClick={() => handleDirectResourceCheckin(item)}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 text-xs font-bold shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                        title="Check in resource person without fee collection"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        Check In (No Fee)
+                      </button>
                     ) : (
                       <button
                         type="button"
@@ -515,6 +602,12 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
         open={isTicketScannerOpen}
         onOpenChange={setIsTicketScannerOpen}
         onCheckinSuccess={handleCheckinSuccess}
+      />
+
+      <ResourceRegistrationModal
+        open={isResourceModalOpen}
+        onOpenChange={setIsResourceModalOpen}
+        onSuccess={handleCheckinSuccess}
       />
     </section>
   );

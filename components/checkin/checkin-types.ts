@@ -1,4 +1,4 @@
-export type PersonType = "participant" | "volunteer";
+export type PersonType = "participant" | "volunteer" | "resource";
 export type RegistrationType = "ONLINE" | "OFFLINE" | "SPOT";
 export type PaymentMethod = "CASH" | "UPI";
 export type PaymentStatus = "paid" | "partially_paid" | "later_pay" | "not_paid";
@@ -36,6 +36,9 @@ export interface UnifiedAttendee {
   diocese?: string | null;
   ministry?: string | null;
   role?: string | null;
+  session?: string | null;
+  fromLocation?: string | null;
+  isFeeExempt?: boolean;
   affiliation?: string | null;
   college?: string | null;
   institute?: string | null;

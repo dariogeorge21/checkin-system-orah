@@ -8,6 +8,7 @@ async function getDashboardStats() {
   const [
     { data: regSummary },
     { data: volSummary },
+    { data: resSummary },
   ] = await Promise.all([
     supabase
       .from("registrations")
@@ -15,6 +16,9 @@ async function getDashboardStats() {
     supabase
       .from("volunteer_registrations")
       .select("id, registration_type, checkins(id)"),
+    supabase
+      .from("resource_registrations")
+      .select("id, is_checked_in"),
   ]);
 
   const verifiedParticipants =
@@ -37,6 +41,12 @@ async function getDashboardStats() {
     volSummary?.filter((v) => (v.registration_type as any) === "OFFLINE" || v.registration_type === "SPOT").length ?? 0;
   const totalVolunteers = volSummary?.length ?? 0;
 
+  const verifiedResources =
+    resSummary?.filter((r) => r.is_checked_in).length ?? 0;
+  const pendingResources =
+    resSummary?.filter((r) => !r.is_checked_in).length ?? 0;
+  const totalResources = resSummary?.length ?? 0;
+
   return {
     verifiedParticipants,
     pendingParticipants,
@@ -46,6 +56,9 @@ async function getDashboardStats() {
     pendingVolunteers,
     spotVolunteers,
     totalVolunteers,
+    verifiedResources,
+    pendingResources,
+    totalResources,
   };
 }
 
@@ -77,9 +90,14 @@ export default async function DashboardPage() {
         </div>
         <div className="hidden sm:block h-4 w-px bg-border self-center" />
         <div className="text-sm">
+          <span className="text-muted-foreground">Total Resources: </span>
+          <span className="font-semibold text-foreground tabular-nums">{stats.totalResources}</span>
+        </div>
+        <div className="hidden sm:block h-4 w-px bg-border self-center" />
+        <div className="text-sm">
           <span className="text-muted-foreground">Grand Total: </span>
           <span className="font-semibold text-foreground tabular-nums">
-            {stats.totalParticipants + stats.totalVolunteers}
+            {stats.totalParticipants + stats.totalVolunteers + stats.totalResources}
           </span>
         </div>
       </div>
@@ -192,6 +210,59 @@ export default async function DashboardPage() {
             icon={
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+            }
+          />
+        </div>
+      </section>
+
+      {/* Resource Persons KPIs */}
+      <section>
+        <div className="mb-4 flex items-center gap-3">
+          <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">
+            Resource Persons
+          </h3>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <KpiCard
+            id="kpi-resources-verified"
+            label="Checked-In Resources"
+            sublabel="Arrived & active at the event"
+            count={stats.verifiedResources}
+            variant="green"
+            badge="Checked In"
+            icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            }
+          />
+          <KpiCard
+            id="kpi-resources-pending"
+            label="Pending Arrival"
+            sublabel="Awaiting desk check-in"
+            count={stats.pendingResources}
+            variant="amber"
+            badge="Pending"
+            icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            }
+          />
+          <KpiCard
+            id="kpi-resources-total"
+            label="Total Resources"
+            sublabel="No fee collection (Exempt)"
+            count={stats.totalResources}
+            variant="indigo"
+            badge="No Fee"
+            icon={
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
             }
           />
