@@ -14,8 +14,8 @@ interface PaymentQrCodeProps {
 
 export function PaymentQrCode({
   amount,
-  upiId = "7838403506@sbi",
-  payeeName = "Dario George",
+  upiId = "9744144105@ybl",
+  payeeName = "ROSE MARY MATHEW",
   note = "Registration Fee - Orah 2026",
   className,
 }: PaymentQrCodeProps) {
