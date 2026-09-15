@@ -98,16 +98,33 @@ export async function POST(req: Request) {
       ticketRecord = ticketById;
       registrationId = ticketById.registration_id;
     } else {
-      // Fallback: check by token_hash or registration_id in tickets
-      const { data: ticketByTokenOrReg } = await dbClient
+      // Fallback 1: check by token_hash (text column — always safe regardless of input format)
+      const { data: ticketByToken } = await dbClient
         .from("tickets")
         .select("id, registration_id, token_hash, issued_at, created_at")
-        .or(`token_hash.eq.${cleanId},registration_id.eq.${cleanId}`)
+        .eq("token_hash", cleanId)
         .maybeSingle();
 
-      if (ticketByTokenOrReg) {
-        ticketRecord = ticketByTokenOrReg;
-        registrationId = ticketByTokenOrReg.registration_id;
+      if (ticketByToken) {
+        ticketRecord = ticketByToken;
+        registrationId = ticketByToken.registration_id;
+      } else {
+        // Fallback 2: check by registration_id — only attempt if cleanId looks like a UUID
+        // (token_hash is a 64-char hex string; passing it as a uuid causes a silent cast
+        //  error in PostgREST which returns zero rows instead of an error, causing false 404s)
+        const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (UUID_RE.test(cleanId)) {
+          const { data: ticketByReg } = await dbClient
+            .from("tickets")
+            .select("id, registration_id, token_hash, issued_at, created_at")
+            .eq("registration_id", cleanId)
+            .maybeSingle();
+
+          if (ticketByReg) {
+            ticketRecord = ticketByReg;
+            registrationId = ticketByReg.registration_id;
+          }
+        }
       }
     }
 
