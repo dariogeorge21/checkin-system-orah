@@ -16,7 +16,7 @@ export interface UpiAccount {
 export const UPI_ACCOUNTS: UpiAccount[] = [
   {
     id: "person1",
-    label: "Person 1 (SBI)",
+    label: "Sebin (SBI)",
     upiId: "sebinjosaji-1@oksbi",
     payeeName: "Sebin",
     bank: "SBI",
@@ -24,7 +24,7 @@ export const UPI_ACCOUNTS: UpiAccount[] = [
   },
   {
     id: "person2",
-    label: "Person 2 (YBL)",
+    label: "Angelin (FED)",
     upiId: "8594083822@ybl",
     payeeName: "ANGELIN RONY",
     bank: "YBL",
