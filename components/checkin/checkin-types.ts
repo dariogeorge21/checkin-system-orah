@@ -19,6 +19,7 @@ export interface CheckinRecord {
   registration_option?: string;
   payment_status: PaymentStatus;
   payment_method?: PaymentMethod | null;
+  group_number?: number | null;
   amount_paid: number;
   amount_due: number;
   payment_note?: string | null;
@@ -52,6 +53,7 @@ export interface UnifiedAttendee {
   // Check-in status
   isCheckedIn: boolean;
   checkin?: CheckinRecord | null;
+  group_number?: number | null;
 
   // Ticket metadata (if loaded via ticket QR code)
   ticketId?: string | null;
@@ -75,4 +77,5 @@ export interface RecentCheckinItem {
   amountDue: number;
   checkedInAt: string;
   registrationType: RegistrationType;
+  groupNumber?: number | null;
 }

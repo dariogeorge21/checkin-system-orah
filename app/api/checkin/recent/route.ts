@@ -37,9 +37,34 @@ export async function GET() {
       recentData = viewData;
     } else {
       // Fallback direct table query
-      const { data: tableData, error: tableErr } = await dbClient
+      let tableSelect = `
+        id,
+        registration_id,
+        volunteer_registration_id,
+        payment_status,
+        payment_method,
+        group_number,
+        amount_paid,
+        amount_due,
+        checked_in_at,
+        registrations ( id, name, phone, parish, registration_type ),
+        volunteer_registrations ( id, name, phone, ministry, registration_type )
+      `;
+
+      let tableData: any = null;
+      let tableErr: any = null;
+
+      const initialTableRes = await dbClient
         .from("checkins")
-        .select(`
+        .select(tableSelect)
+        .order("checked_in_at", { ascending: false })
+        .limit(15);
+
+      tableData = initialTableRes.data;
+      tableErr = initialTableRes.error;
+
+      if (tableErr && tableErr.message.includes("group_number")) {
+        const fallbackTableSelect = `
           id,
           registration_id,
           volunteer_registration_id,
@@ -50,9 +75,15 @@ export async function GET() {
           checked_in_at,
           registrations ( id, name, phone, parish, registration_type ),
           volunteer_registrations ( id, name, phone, ministry, registration_type )
-        `)
-        .order("checked_in_at", { ascending: false })
-        .limit(15);
+        `;
+        const res = await dbClient
+          .from("checkins")
+          .select(fallbackTableSelect)
+          .order("checked_in_at", { ascending: false })
+          .limit(15);
+        tableData = res.data;
+        tableErr = res.error;
+      }
 
       if (!tableErr && tableData) {
         recentData = tableData.map((row: any) => {
@@ -72,6 +103,7 @@ export async function GET() {
             volunteer_registration_type: vol?.registration_type,
             payment_status: row.payment_status,
             payment_method: row.payment_method,
+            group_number: row.group_number ?? null,
             amount_paid: row.amount_paid,
             amount_due: row.amount_due,
             checked_in_at: row.checked_in_at,
@@ -97,6 +129,7 @@ export async function GET() {
       checkedInAt: row.checked_in_at || new Date().toISOString(),
       registrationType:
         row.participant_registration_type || row.volunteer_registration_type || "ONLINE",
+      groupNumber: row.group_number ?? null,
     }));
 
     return NextResponse.json({ items });

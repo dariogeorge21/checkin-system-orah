@@ -35,11 +35,12 @@ export async function GET(req: Request) {
     // 2. Fetch Participants (if applicable)
     let participants: any[] = [];
     if (filter !== "volunteers" && filter !== "resources") {
+      let selectFields =
+        "id, name, phone, email, gender, dob, parish, diocese, affiliation, college, institute, year_of_study, address, registration_type, created_at, checkins(id, payment_status, payment_method, group_number, amount_paid, amount_due, payment_note, checked_in_at, checked_in_by)";
+
       let pQuery = dbClient
         .from("registrations")
-        .select(
-          "id, name, phone, email, gender, dob, parish, diocese, affiliation, college, institute, year_of_study, address, registration_type, created_at, checkins(id, payment_status, payment_method, amount_paid, amount_due, payment_note, checked_in_at, checked_in_by)"
-        )
+        .select(selectFields)
         .order("created_at", { ascending: false });
 
       if (cleanQuery) {
@@ -55,7 +56,28 @@ export async function GET(req: Request) {
         }
       }
 
-      const { data, error: pErr } = await pQuery.limit(limit);
+      let { data, error: pErr } = await pQuery.limit(limit);
+      if (pErr && pErr.message.includes("group_number")) {
+        // Fallback without group_number
+        let fallbackSelect =
+          "id, name, phone, email, gender, dob, parish, diocese, affiliation, college, institute, year_of_study, address, registration_type, created_at, checkins(id, payment_status, payment_method, amount_paid, amount_due, payment_note, checked_in_at, checked_in_by)";
+        let fallbackQuery = dbClient.from("registrations").select(fallbackSelect).order("created_at", { ascending: false });
+        if (cleanQuery) {
+          if (phoneQuery.length >= 3) {
+            fallbackQuery = fallbackQuery.or(
+              `name.ilike.%${cleanQuery}%,phone.ilike.%${phoneQuery}%,email.ilike.%${cleanQuery}%,parish.ilike.%${cleanQuery}%,diocese.ilike.%${cleanQuery}%`
+            );
+          } else {
+            fallbackQuery = fallbackQuery.or(
+              `name.ilike.%${cleanQuery}%,email.ilike.%${cleanQuery}%,parish.ilike.%${cleanQuery}%,diocese.ilike.%${cleanQuery}%`
+            );
+          }
+        }
+        const fallbackRes = await fallbackQuery.limit(limit);
+        data = fallbackRes.data;
+        pErr = fallbackRes.error;
+      }
+
       if (!pErr && data) {
         participants = data;
       }
@@ -144,11 +166,13 @@ export async function GET(req: Request) {
         registrationType: p.registration_type,
         createdAt: p.created_at,
         isCheckedIn,
+        group_number: primaryCheckin?.group_number ?? null,
         checkin: primaryCheckin
           ? {
               id: primaryCheckin.id,
               payment_status: primaryCheckin.payment_status || "not_paid",
               payment_method: primaryCheckin.payment_method || null,
+              group_number: primaryCheckin.group_number ?? null,
               amount_paid: Number(primaryCheckin.amount_paid) || 0,
               amount_due: Number(primaryCheckin.amount_due) || 0,
               payment_note: primaryCheckin.payment_note || null,

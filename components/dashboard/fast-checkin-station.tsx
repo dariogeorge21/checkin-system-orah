@@ -450,10 +450,17 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
                     {item.isCheckedIn ? (
                       <div className="flex items-center gap-2">
                         <div className="text-right">
-                          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-                            <span className="size-1.5 rounded-full bg-emerald-500" />
-                            ✓ Checked In
-                          </span>
+                          <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+                              <span className="size-1.5 rounded-full bg-emerald-500" />
+                              ✓ Checked In
+                            </span>
+                            {item.personType === "participant" && (item.checkin?.group_number || item.group_number) && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-extrabold rounded-md bg-primary/10 text-primary border border-primary/20 tabular-nums">
+                                Group {item.checkin?.group_number ?? item.group_number}
+                              </span>
+                            )}
+                          </div>
                           <span className="block text-[10px] text-muted-foreground mt-0.5 font-medium">
                             {item.personType === "resource"
                               ? "No Fee Collection (Exempt)"
@@ -550,9 +557,16 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
                 {recentCheckins.map((item) => (
                   <div key={item.id} className="py-2.5 first:pt-0 last:pb-0 space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-xs text-foreground truncate">
-                        {item.name}
-                      </span>
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="font-semibold text-xs text-foreground truncate">
+                          {item.name}
+                        </span>
+                        {item.personType === "participant" && item.groupNumber && (
+                          <span className="shrink-0 text-[9px] font-black px-1.5 py-0.2 rounded-md bg-primary/10 text-primary border border-primary/20 tabular-nums">
+                            Grp {item.groupNumber}
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                         ₹{item.amountPaid}
                       </span>

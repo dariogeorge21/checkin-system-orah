@@ -185,13 +185,26 @@ export async function POST(req: Request) {
     }
 
     // 5. Fetch check-in status
-    const { data: checkinData } = await dbClient
-      .from("checkins")
-      .select(
-        "id, payment_status, payment_method, amount_paid, amount_due, payment_note, checked_in_at, checked_in_by"
-      )
-      .eq("registration_id", participant.id)
-      .maybeSingle();
+    let checkinData: any = null;
+    try {
+      const { data } = await dbClient
+        .from("checkins")
+        .select(
+          "id, payment_status, payment_method, group_number, amount_paid, amount_due, payment_note, checked_in_at, checked_in_by"
+        )
+        .eq("registration_id", participant.id)
+        .maybeSingle();
+      checkinData = data;
+    } catch {
+      const { data } = await dbClient
+        .from("checkins")
+        .select(
+          "id, payment_status, payment_method, amount_paid, amount_due, payment_note, checked_in_at, checked_in_by"
+        )
+        .eq("registration_id", participant.id)
+        .maybeSingle();
+      checkinData = data;
+    }
 
     const isCheckedIn = !!checkinData;
 
@@ -213,11 +226,13 @@ export async function POST(req: Request) {
       registrationType: participant.registration_type,
       createdAt: participant.created_at,
       isCheckedIn,
+      group_number: checkinData?.group_number ?? null,
       checkin: checkinData
         ? {
             id: checkinData.id,
             payment_status: checkinData.payment_status || "not_paid",
             payment_method: checkinData.payment_method || null,
+            group_number: checkinData.group_number ?? null,
             amount_paid: Number(checkinData.amount_paid) || 0,
             amount_due: Number(checkinData.amount_due) || 0,
             payment_note: checkinData.payment_note || null,

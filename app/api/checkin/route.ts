@@ -151,11 +151,37 @@ export async function POST(req: Request) {
 
     // 5. Check if checkin already exists
     const queryField = personType === "participant" ? "registration_id" : "volunteer_registration_id";
-    const { data: existingCheckin } = await dbClient
-      .from("checkins")
-      .select("id")
-      .eq(queryField, registrationId)
-      .maybeSingle();
+    let existingCheckin: any = null;
+    try {
+      const { data } = await dbClient
+        .from("checkins")
+        .select("id, group_number")
+        .eq(queryField, registrationId)
+        .maybeSingle();
+      existingCheckin = data;
+    } catch {
+      const { data } = await dbClient
+        .from("checkins")
+        .select("id")
+        .eq(queryField, registrationId)
+        .maybeSingle();
+      existingCheckin = data;
+    }
+
+    // 6. Compute group number for participants (1-15 round-robin order)
+    let assignedGroupNumber: number | null = null;
+    if (personType === "participant") {
+      if (existingCheckin?.group_number) {
+        assignedGroupNumber = existingCheckin.group_number;
+      } else {
+        const { count } = await dbClient
+          .from("checkins")
+          .select("id", { count: "exact", head: true })
+          .not("registration_id", "is", null);
+        const total = count ?? 0;
+        assignedGroupNumber = (total % 15) + 1;
+      }
+    }
 
     const checkinPayload: Record<string, any> = {
       event_id: eventId,
@@ -171,76 +197,94 @@ export async function POST(req: Request) {
       updated_at: new Date().toISOString(),
     };
 
+    if (assignedGroupNumber !== null) {
+      checkinPayload.group_number = assignedGroupNumber;
+    }
+
     let checkinResult: any = null;
 
-    if (existingCheckin?.id) {
-      // Update existing checkin
-      const { data: updated, error: updateErr } = await dbClient
-        .from("checkins")
-        .update(checkinPayload)
-        .eq("id", existingCheckin.id)
-        .select("*")
-        .single();
+    const executeWithFallbacks = async (operation: "insert" | "update") => {
+      let currentPayload = { ...checkinPayload };
 
-      if (updateErr) {
-        // Retry without payment_method column if schema error
-        if (updateErr.message.includes("payment_method") || updateErr.message.includes("column")) {
-          const fallbackPayload = { ...checkinPayload };
-          delete fallbackPayload.payment_method;
-          fallbackPayload.payment_note = fallbackPayload.payment_note
-            ? `[Method: ${paymentData.method}] ${fallbackPayload.payment_note}`
-            : `[Method: ${paymentData.method}]`;
+      let res =
+        operation === "update"
+          ? await dbClient
+              .from("checkins")
+              .update(currentPayload)
+              .eq("id", existingCheckin.id)
+              .select("*")
+              .single()
+          : await dbClient.from("checkins").insert(currentPayload).select("*").single();
 
-          const { data: fallbackUpdated, error: fallbackErr } = await dbClient
-            .from("checkins")
-            .update(fallbackPayload)
-            .eq("id", existingCheckin.id)
-            .select("*")
-            .single();
+      if (!res.error) return res.data;
 
-          if (fallbackErr) {
-            return NextResponse.json({ error: fallbackErr.message }, { status: 500 });
-          }
-          checkinResult = fallbackUpdated;
-        } else {
-          return NextResponse.json({ error: updateErr.message }, { status: 500 });
+      // Schema mismatch fallback (e.g. group_number or payment_method pending migration)
+      const errMessage = res.error.message || "";
+      if (
+        errMessage.includes("group_number") ||
+        errMessage.includes("payment_method") ||
+        errMessage.includes("column")
+      ) {
+        if (errMessage.includes("group_number")) {
+          delete currentPayload.group_number;
         }
-      } else {
-        checkinResult = updated;
-      }
-    } else {
-      // Insert new checkin
-      const { data: inserted, error: insertErr } = await dbClient
-        .from("checkins")
-        .insert(checkinPayload)
-        .select("*")
-        .single();
-
-      if (insertErr) {
-        // Retry without payment_method column if schema error
-        if (insertErr.message.includes("payment_method") || insertErr.message.includes("column")) {
-          const fallbackPayload = { ...checkinPayload };
-          delete fallbackPayload.payment_method;
-          fallbackPayload.payment_note = fallbackPayload.payment_note
-            ? `[Method: ${paymentData.method}] ${fallbackPayload.payment_note}`
+        if (errMessage.includes("payment_method")) {
+          delete currentPayload.payment_method;
+          currentPayload.payment_note = currentPayload.payment_note
+            ? `[Method: ${paymentData.method}] ${currentPayload.payment_note}`
             : `[Method: ${paymentData.method}]`;
-
-          const { data: fallbackInserted, error: fallbackErr } = await dbClient
-            .from("checkins")
-            .insert(fallbackPayload)
-            .select("*")
-            .single();
-
-          if (fallbackErr) {
-            return NextResponse.json({ error: fallbackErr.message }, { status: 500 });
-          }
-          checkinResult = fallbackInserted;
-        } else {
-          return NextResponse.json({ error: insertErr.message }, { status: 500 });
         }
-      } else {
-        checkinResult = inserted;
+
+        res =
+          operation === "update"
+            ? await dbClient
+                .from("checkins")
+                .update(currentPayload)
+                .eq("id", existingCheckin.id)
+                .select("*")
+                .single()
+            : await dbClient.from("checkins").insert(currentPayload).select("*").single();
+
+        if (!res.error) return res.data;
+
+        // If another optional column also needs removal
+        if (currentPayload.group_number) delete currentPayload.group_number;
+        if (currentPayload.payment_method) {
+          delete currentPayload.payment_method;
+          currentPayload.payment_note = currentPayload.payment_note
+            ? `[Method: ${paymentData.method}] ${currentPayload.payment_note}`
+            : `[Method: ${paymentData.method}]`;
+        }
+
+        res =
+          operation === "update"
+            ? await dbClient
+                .from("checkins")
+                .update(currentPayload)
+                .eq("id", existingCheckin.id)
+                .select("*")
+                .single()
+            : await dbClient.from("checkins").insert(currentPayload).select("*").single();
+
+        if (!res.error) return res.data;
       }
+
+      throw new Error(res.error.message);
+    };
+
+    try {
+      if (existingCheckin?.id) {
+        checkinResult = await executeWithFallbacks("update");
+      } else {
+        checkinResult = await executeWithFallbacks("insert");
+      }
+
+      // Ensure client receives assigned group number even if DB column fallback was triggered
+      if (checkinResult && assignedGroupNumber !== null && !checkinResult.group_number) {
+        checkinResult.group_number = assignedGroupNumber;
+      }
+    } catch (opErr: any) {
+      return NextResponse.json({ error: opErr.message }, { status: 500 });
     }
 
     return NextResponse.json({

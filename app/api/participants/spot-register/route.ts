@@ -130,7 +130,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Auto-approve and insert into checkins table
+    // 2. Auto-approve and insert into checkins table with 1-15 round-robin group number
+    let assignedGroupNumber: number | null = null;
+    try {
+      const { count } = await dbClient
+        .from("checkins")
+        .select("id", { count: "exact", head: true })
+        .not("registration_id", "is", null);
+      const total = count ?? 0;
+      assignedGroupNumber = (total % 15) + 1;
+    } catch (cntErr) {
+      console.warn("Could not count participant checkins for spot registration:", cntErr);
+    }
+
     const checkinPayload: Record<string, any> = {
       event_id: eventId,
       registration_id: registration.id,
@@ -144,44 +156,62 @@ export async function POST(req: Request) {
       checked_in_by: user.id,
     };
 
+    if (assignedGroupNumber !== null) {
+      checkinPayload.group_number = assignedGroupNumber;
+    }
+
     let checkinResult: any = null;
-    const { data: checkin, error: checkinError } = await dbClient
+
+    // Insert with column fallbacks
+    let insertPayload = { ...checkinPayload };
+    let { data: checkin, error: checkinError } = await dbClient
       .from("checkins")
-      .insert(checkinPayload)
+      .insert(insertPayload)
       .select("*")
       .single();
 
     if (checkinError) {
-      // Check if failure is due to missing payment_method column (pre-migration)
+      const errMsg = checkinError.message || "";
       if (
-        checkinError.message.includes("payment_method") ||
-        checkinError.message.includes("column")
+        errMsg.includes("group_number") ||
+        errMsg.includes("payment_method") ||
+        errMsg.includes("column")
       ) {
-        console.warn(
-          "Checkin insert failed with payment_method. Retrying without payment_method column..."
-        );
-        const fallbackCheckinPayload = { ...checkinPayload };
-        delete fallbackCheckinPayload.payment_method;
-        fallbackCheckinPayload.payment_note = fallbackCheckinPayload.payment_note
-          ? `[Method: ${paymentData.method}] ${fallbackCheckinPayload.payment_note}`
-          : `[Method: ${paymentData.method}]`;
+        if (errMsg.includes("group_number")) delete insertPayload.group_number;
+        if (errMsg.includes("payment_method")) {
+          delete insertPayload.payment_method;
+          insertPayload.payment_note = insertPayload.payment_note
+            ? `[Method: ${paymentData.method}] ${insertPayload.payment_note}`
+            : `[Method: ${paymentData.method}]`;
+        }
 
-        const { data: retryCheckin, error: retryError } = await dbClient
+        const retryRes = await dbClient
           .from("checkins")
-          .insert(fallbackCheckinPayload)
+          .insert(insertPayload)
           .select("*")
           .single();
 
-        if (retryError) {
-          console.error("Error in fallback checkin insertion:", retryError);
-          return NextResponse.json(
-            { error: "Registration created, but check-in record failed: " + retryError.message },
-            { status: 500 }
-          );
+        if (retryRes.error) {
+          // Retry without both optional columns if needed
+          delete insertPayload.group_number;
+          delete insertPayload.payment_method;
+          const finalRetry = await dbClient
+            .from("checkins")
+            .insert(insertPayload)
+            .select("*")
+            .single();
+
+          if (finalRetry.error) {
+            return NextResponse.json(
+              { error: "Registration created, but check-in record failed: " + finalRetry.error.message },
+              { status: 500 }
+            );
+          }
+          checkinResult = finalRetry.data;
+        } else {
+          checkinResult = retryRes.data;
         }
-        checkinResult = retryCheckin;
       } else {
-        console.error("Error creating checkin record:", checkinError);
         return NextResponse.json(
           { error: "Registration created, but check-in record failed: " + checkinError.message },
           { status: 500 }
@@ -189,6 +219,10 @@ export async function POST(req: Request) {
       }
     } else {
       checkinResult = checkin;
+    }
+
+    if (checkinResult && assignedGroupNumber !== null && !checkinResult.group_number) {
+      checkinResult.group_number = assignedGroupNumber;
     }
 
     return NextResponse.json({

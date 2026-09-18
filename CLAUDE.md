@@ -80,3 +80,17 @@ type Payment = {
   amountDue: number;
   note?: string;
 };
+```
+
+---
+
+## Group Assignment (Participants Only)
+
+- Group numbers 1 to 15 assigned in sequential round-robin order:
+  - Check-in 1 &rarr; Group 1
+  - Check-in 2 &rarr; Group 2
+  - ...
+  - Check-in 15 &rarr; Group 15
+  - Check-in 16 &rarr; Group 1
+- Strictly applicable only to participants (not volunteers or resource persons).
+- Visible as a hanging badge on the check-in modal during payment and saved to `checkins.group_number`.

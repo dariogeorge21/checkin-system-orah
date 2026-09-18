@@ -24,6 +24,7 @@ import {
   PaymentStatus,
 } from "./spot-registration-types";
 import { PaymentQrCode } from "./payment-qr-code";
+import { HangingGroupBadge } from "@/components/checkin/hanging-group-badge";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,11 @@ export function SpotRegistrationModal({
   const [paymentData, setPaymentData] = useState<SpotPaymentData>(INITIAL_PAYMENT_DATA);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [currentStep, setCurrentStep] = useState<"form" | "payment" | "success">("form");
+
+  // Group number state
+  const [groupNumber, setGroupNumber] = useState<number | null>(null);
+  const [loadingGroup, setLoadingGroup] = useState(false);
+  const [isGroupAssigned, setIsGroupAssigned] = useState(false);
 
   // Submission State
   const [loading, setLoading] = useState(false);
@@ -137,7 +143,22 @@ export function SpotRegistrationModal({
     }
 
     setErrors({});
+    fetchNextGroup();
     setCurrentStep("payment");
+  };
+
+  const fetchNextGroup = () => {
+    setLoadingGroup(true);
+    fetch("/api/checkin/next-group")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.groupNumber) {
+          setGroupNumber(data.groupNumber);
+          setIsGroupAssigned(false);
+        }
+      })
+      .catch((err) => console.error("Failed to load group number:", err))
+      .finally(() => setLoadingGroup(false));
   };
 
   // Final Submit
@@ -155,6 +176,12 @@ export function SpotRegistrationModal({
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "Failed to complete spot registration.");
+      }
+
+      const assignedGroup = data.checkin?.group_number ?? groupNumber;
+      if (assignedGroup) {
+        setGroupNumber(assignedGroup);
+        setIsGroupAssigned(true);
       }
 
       setCreatedParticipant(data.participant);
@@ -175,6 +202,8 @@ export function SpotRegistrationModal({
     setErrors({});
     setSubmitError(null);
     setCreatedParticipant(null);
+    setGroupNumber(null);
+    setIsGroupAssigned(false);
     setCurrentStep("form");
   };
 
@@ -189,13 +218,22 @@ export function SpotRegistrationModal({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="max-w-3xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl"
+        className="max-w-3xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl relative"
         aria-describedby="spot-reg-description"
       >
+        {/* Hanging Group Badge during Payment / Success */}
+        {currentStep !== "form" && (
+          <HangingGroupBadge
+            groupNumber={groupNumber}
+            loading={loadingGroup}
+            isAssigned={isGroupAssigned}
+          />
+        )}
+
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-border bg-muted/20">
           <DialogHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pr-24 sm:pr-28">
               <div className="flex items-center gap-2">
                 <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
                   SPOT
@@ -781,11 +819,23 @@ export function SpotRegistrationModal({
                   <h4 className="text-sm font-bold text-foreground">Standard Registration Fee</h4>
                   <p className="text-xs text-muted-foreground">Orah Campus Meet 2026</p>
                 </div>
-                <div className="text-right">
-                  <span className="text-2xl font-extrabold text-foreground tabular-nums">₹600</span>
-                  <span className="block text-[10px] text-muted-foreground uppercase font-semibold">
-                    Per Attendee
-                  </span>
+                <div className="flex items-center gap-3">
+                  {groupNumber && (
+                    <div className="text-right">
+                      <span className="text-[10px] text-muted-foreground uppercase font-semibold block">
+                        Assigned
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-sm font-black text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-lg tabular-nums">
+                        Group {groupNumber}
+                      </span>
+                    </div>
+                  )}
+                  <div className="text-right">
+                    <span className="text-2xl font-extrabold text-foreground tabular-nums">₹600</span>
+                    <span className="block text-[10px] text-muted-foreground uppercase font-semibold">
+                      Per Attendee
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -1091,6 +1141,22 @@ export function SpotRegistrationModal({
                         {paymentData.amountPaid})
                       </span>
                     </div>
+
+                    {groupNumber && (
+                      <div className="col-span-2 pt-2 border-t border-border/70 flex items-center justify-between">
+                        <div>
+                          <span className="text-muted-foreground block text-[10px] uppercase font-semibold">
+                            Assigned Group
+                          </span>
+                          <span className="font-semibold text-foreground text-xs">
+                            Campus Meet Team
+                          </span>
+                        </div>
+                        <span className="px-3 py-1 text-sm font-black rounded-lg bg-primary/10 text-primary border border-primary/20 tabular-nums">
+                          Group {groupNumber}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

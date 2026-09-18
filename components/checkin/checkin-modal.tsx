@@ -15,6 +15,7 @@ import {
   PaymentStatus,
 } from "./checkin-types";
 import { PaymentQrCode } from "@/components/participants/payment-qr-code";
+import { HangingGroupBadge } from "./hanging-group-badge";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
@@ -48,9 +49,14 @@ export function CheckinModal({
   const [error, setError] = useState<string | null>(null);
   const [successData, setSuccessData] = useState<any | null>(null);
 
+  // Group number state for participants
+  const [groupNumber, setGroupNumber] = useState<number | null>(null);
+  const [loadingGroup, setLoadingGroup] = useState(false);
+  const [isGroupAssigned, setIsGroupAssigned] = useState(false);
+
   // Sync state when attendee opens
   useEffect(() => {
-    if (attendee) {
+    if (attendee && open) {
       setError(null);
       setSuccessData(null);
       const fee = attendee.personType === "volunteer" ? 400 : 600;
@@ -70,6 +76,32 @@ export function CheckinModal({
           amountDue: 0,
           note: "",
         });
+      }
+
+      // Handle group number (STRICTLY for participants, NOT volunteers or resources)
+      if (attendee.personType === "participant") {
+        if (attendee.checkin?.group_number) {
+          setGroupNumber(attendee.checkin.group_number);
+          setIsGroupAssigned(true);
+        } else if (attendee.group_number) {
+          setGroupNumber(attendee.group_number);
+          setIsGroupAssigned(true);
+        } else {
+          setLoadingGroup(true);
+          fetch(`/api/checkin/next-group?registrationId=${attendee.id}`)
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.groupNumber) {
+                setGroupNumber(data.groupNumber);
+                setIsGroupAssigned(!!data.isAssigned);
+              }
+            })
+            .catch((err) => console.error("Failed to load group number:", err))
+            .finally(() => setLoadingGroup(false));
+        }
+      } else {
+        setGroupNumber(null);
+        setIsGroupAssigned(false);
       }
     }
   }, [attendee, open]);
@@ -138,10 +170,20 @@ export function CheckinModal({
         throw new Error(data.error || "Failed to complete check-in.");
       }
 
+      const assignedGroup = data.checkin?.group_number ?? groupNumber;
+      if (assignedGroup) {
+        setGroupNumber(assignedGroup);
+        setIsGroupAssigned(true);
+      }
+
       const updatedAttendee: UnifiedAttendee = {
         ...attendee,
         isCheckedIn: true,
-        checkin: data.checkin,
+        group_number: assignedGroup,
+        checkin: {
+          ...data.checkin,
+          group_number: assignedGroup,
+        },
       };
 
       setSuccessData(data);
@@ -167,13 +209,22 @@ export function CheckinModal({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="max-w-xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl"
+        className="max-w-xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl relative"
         aria-describedby="checkin-modal-desc"
       >
+        {/* Hanging Group Badge (Strictly for Participants, NOT volunteers/resources) */}
+        {attendee.personType === "participant" && (
+          <HangingGroupBadge
+            groupNumber={groupNumber}
+            loading={loadingGroup}
+            isAssigned={isGroupAssigned}
+          />
+        )}
+
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-border bg-muted/20">
           <DialogHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pr-24 sm:pr-28">
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
@@ -290,6 +341,22 @@ export function CheckinModal({
                       ₹{paymentData.amountDue}
                     </span>
                   </div>
+
+                  {attendee.personType === "participant" && groupNumber && (
+                    <div className="col-span-2 pt-2 border-t border-border/70 flex items-center justify-between">
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-semibold">
+                          Assigned Event Group
+                        </span>
+                        <span className="font-semibold text-foreground text-xs">
+                          Campus Meet Team
+                        </span>
+                      </div>
+                      <span className="px-3 py-1 text-sm font-black rounded-lg bg-primary/10 text-primary border border-primary/20 tabular-nums">
+                        Group {groupNumber}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -370,11 +437,24 @@ export function CheckinModal({
                   </div>
                 </div>
 
-                <div className="text-right sm:border-l sm:border-border sm:pl-4">
-                  <span className="text-[10px] text-muted-foreground uppercase font-semibold block">
-                    Event Fee
-                  </span>
-                  <span className="text-xl font-extrabold text-foreground tabular-nums">₹{defaultFee}</span>
+                <div className="flex items-center gap-3 sm:border-l sm:border-border sm:pl-4">
+                  {attendee.personType === "participant" && groupNumber && (
+                    <div className="text-right">
+                      <span className="text-[10px] text-muted-foreground uppercase font-semibold block">
+                        Assigned
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-black text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-lg tabular-nums">
+                        Group {groupNumber}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="text-right">
+                    <span className="text-[10px] text-muted-foreground uppercase font-semibold block">
+                      Event Fee
+                    </span>
+                    <span className="text-xl font-extrabold text-foreground tabular-nums">₹{defaultFee}</span>
+                  </div>
                 </div>
               </div>
 

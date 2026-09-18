@@ -24,6 +24,7 @@ export interface Participant {
   registration_type: RegistrationType;
   is_verified: boolean;
   created_at: string;
+  group_number?: number | null;
   checkin?: CheckinRecord | null;
 }
 
@@ -48,25 +49,42 @@ function RegistrationTypeBadge({ type }: { type: RegistrationType }) {
   );
 }
 
-function VerifiedBadge({ is_verified, checkin }: { is_verified: boolean; checkin?: CheckinRecord | null }) {
+function VerifiedBadge({
+  is_verified,
+  checkin,
+  group_number,
+}: {
+  is_verified: boolean;
+  checkin?: CheckinRecord | null;
+  group_number?: number | null;
+}) {
+  const grp = checkin?.group_number ?? group_number;
   return (
-    <div className="space-y-0.5">
-      <span
-        className={cn(
-          "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
-          is_verified
-            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-            : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
-        )}
-      >
+    <div className="space-y-1">
+      <div className="flex items-center gap-1.5 flex-wrap">
         <span
           className={cn(
-            "size-1.5 rounded-full",
-            is_verified ? "bg-emerald-500" : "bg-amber-500"
+            "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+            is_verified
+              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+              : "bg-amber-500/10 text-amber-700 dark:text-amber-400"
           )}
-        />
-        {is_verified ? "Verified" : "Pending"}
-      </span>
+        >
+          <span
+            className={cn(
+              "size-1.5 rounded-full",
+              is_verified ? "bg-emerald-500" : "bg-amber-500"
+            )}
+          />
+          {is_verified ? "Verified" : "Pending"}
+        </span>
+
+        {is_verified && grp && (
+          <span className="inline-flex items-center px-1.5 py-0.2 text-[10px] font-extrabold rounded-md bg-primary/10 text-primary border border-primary/20 tabular-nums">
+            Group {grp}
+          </span>
+        )}
+      </div>
       {is_verified && checkin && (
         <span className="block text-[10px] text-muted-foreground font-medium">
           {checkin.payment_method || "Paid"} • ₹{checkin.amount_paid}
@@ -267,7 +285,7 @@ export function ParticipantsTable({ participants, onParticipantUpdated }: Partic
                       <RegistrationTypeBadge type={p.registration_type} />
                     </td>
                     <td className="px-4 py-3">
-                      <VerifiedBadge is_verified={p.is_verified} checkin={p.checkin} />
+                      <VerifiedBadge is_verified={p.is_verified} checkin={p.checkin} group_number={p.group_number} />
                     </td>
                     <td className="px-4 py-3 text-center">
                       {p.is_verified ? (
