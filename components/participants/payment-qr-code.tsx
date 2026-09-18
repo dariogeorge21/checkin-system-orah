@@ -14,9 +14,9 @@ interface PaymentQrCodeProps {
 
 export function PaymentQrCode({
   amount,
-  upiId = "9744144105@ybl",
-  payeeName = "ROSE MARY MATHEW",
-  note = "Registration Fee - Orah 2026",
+  upiId = "sebinjosaji-1@oksbi",
+  payeeName = "Sebin",
+  note = "Registration Fee - Orah 2026", 
   className,
 }: PaymentQrCodeProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
