@@ -457,7 +457,7 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
                           <span className="block text-[10px] text-muted-foreground mt-0.5 font-medium">
                             {item.personType === "resource"
                               ? "No Fee Collection (Exempt)"
-                              : `${item.checkin?.payment_method || "Paid"} • ₹${item.checkin?.amount_paid ?? 600}`}
+                              : `${item.checkin?.payment_method || "Paid"} • ₹${item.checkin?.amount_paid ?? (item.personType === "volunteer" ? 400 : 600)}`}
                           </span>
                         </div>
 
@@ -511,7 +511,7 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
                         >
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
-                        Check In & Fee (₹600)
+                        Check In & Fee (₹{item.personType === "volunteer" ? 400 : 600})
                       </button>
                     )}
                   </div>

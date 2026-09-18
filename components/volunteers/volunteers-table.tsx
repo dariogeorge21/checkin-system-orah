@@ -167,7 +167,7 @@ export function VolunteersTable({ volunteers, onVolunteerUpdated }: VolunteersTa
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[oklch(0.55_0.22_270)]/30 transition-all"
         >
           <option value="ALL">All Payments</option>
-          <option value="paid">Paid (₹600)</option>
+          <option value="paid">Paid (₹400)</option>
           <option value="partially_paid">Partial</option>
           <option value="later_pay">Pay Later</option>
           <option value="not_paid">Unpaid</option>

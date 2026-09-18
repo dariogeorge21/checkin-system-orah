@@ -46,7 +46,7 @@ export const INITIAL_VOLUNTEER_FORM_DATA: VolunteerSpotFormData = {
 export const INITIAL_VOLUNTEER_PAYMENT_DATA: VolunteerSpotPaymentData = {
   method: "UPI",
   status: "paid",
-  amountPaid: 600,
+  amountPaid: 400,
   amountDue: 0,
   note: "",
 };

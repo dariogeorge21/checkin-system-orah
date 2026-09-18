@@ -32,7 +32,7 @@ Then:
 
 1. Display registration details.
 2. Verify the person.
-3. Collect the ₹600 fee.
+3. Collect the registration fee (Participant: ₹600, Volunteer: ₹400).
 4. Record payment status.
 5. Approve/check in the person.
 
@@ -42,7 +42,7 @@ Then:
 2. Select Participant or Volunteer.
 3. Collect required details.
 4. Create the registration.
-5. Collect ₹600.
+5. Collect the registration fee (Participant: ₹600, Volunteer: ₹400).
 6. Record payment.
 7. Approve/check in the person.
 
@@ -50,7 +50,9 @@ Then:
 
 ## Payment
 
-Standard fee: **₹600**
+Standard fee:
+- **Participant:** ₹600
+- **Volunteer:** ₹400
 
 Payment statuses:
 

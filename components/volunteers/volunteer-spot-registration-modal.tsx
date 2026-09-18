@@ -77,19 +77,19 @@ export function VolunteerSpotRegistrationModal({
 
   const handlePaymentStatusChange = (status: PaymentStatus) => {
     let amountPaid = prevAmount(paymentData.amountPaid);
-    let amountDue = 600;
+    let amountDue = 400;
 
     if (status === "paid") {
-      amountPaid = 600;
+      amountPaid = 400;
       amountDue = 0;
     } else if (status === "not_paid" || status === "later_pay") {
       amountPaid = 0;
-      amountDue = 600;
+      amountDue = 400;
     } else if (status === "partially_paid") {
-      if (amountPaid <= 0 || amountPaid >= 600) {
-        amountPaid = 300;
+      if (amountPaid <= 0 || amountPaid >= 400) {
+        amountPaid = 200;
       }
-      amountDue = 600 - amountPaid;
+      amountDue = 400 - amountPaid;
     }
 
     setPaymentData((prev) => ({
@@ -101,19 +101,19 @@ export function VolunteerSpotRegistrationModal({
   };
 
   function prevAmount(current: number): number {
-    return current > 0 && current < 600 ? current : 300;
+    return current > 0 && current < 400 ? current : 200;
   }
 
   const handlePartialAmountChange = (valStr: string) => {
     const parsed = parseInt(valStr.replace(/\D/g, ""), 10) || 0;
-    const clampedPaid = Math.min(600, Math.max(0, parsed));
-    const due = 600 - clampedPaid;
+    const clampedPaid = Math.min(400, Math.max(0, parsed));
+    const due = 400 - clampedPaid;
 
     setPaymentData((prev) => ({
       ...prev,
       amountPaid: clampedPaid,
       amountDue: due,
-      status: clampedPaid === 600 ? "paid" : clampedPaid === 0 ? "not_paid" : "partially_paid",
+      status: clampedPaid === 400 ? "paid" : clampedPaid === 0 ? "not_paid" : "partially_paid",
     }));
   };
 
@@ -467,7 +467,7 @@ export function VolunteerSpotRegistrationModal({
                   <p className="text-xs text-muted-foreground">Orah Campus Meet 2026</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-2xl font-extrabold text-foreground tabular-nums">₹600</span>
+                  <span className="text-2xl font-extrabold text-foreground tabular-nums">₹400</span>
                   <span className="block text-[10px] text-muted-foreground uppercase font-semibold">
                     Per Volunteer
                   </span>
@@ -502,7 +502,7 @@ export function VolunteerSpotRegistrationModal({
                         : "border-border bg-background hover:bg-muted/40 text-foreground"
                     )}
                   >
-                    ✓ Full Paid (₹600)
+                    ✓ Full Paid (₹400)
                   </button>
 
                   <button
@@ -515,7 +515,7 @@ export function VolunteerSpotRegistrationModal({
                         : "border-border bg-background hover:bg-muted/40 text-foreground"
                     )}
                   >
-                    Half Paid (₹300)
+                    Half Paid (₹200)
                   </button>
 
                   <button
@@ -572,7 +572,7 @@ export function VolunteerSpotRegistrationModal({
                       id="volunteer-spot-partial-amount"
                       type="number"
                       min={1}
-                      max={599}
+                      max={399}
                       value={paymentData.amountPaid || ""}
                       onChange={(e) => handlePartialAmountChange(e.target.value)}
                       placeholder="Enter amount collected"
@@ -583,7 +583,7 @@ export function VolunteerSpotRegistrationModal({
                   {/* Quick partial chips */}
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-muted-foreground">Quick set:</span>
-                    {[100, 200, 300, 500].map((amt) => (
+                    {[100, 200, 300].map((amt) => (
                       <button
                         key={amt}
                         type="button"
@@ -676,7 +676,7 @@ export function VolunteerSpotRegistrationModal({
                       Pay Later / Unpaid Selected (₹0 Due Now)
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      No UPI QR payment required right now. The ₹600 registration fee balance is recorded as due.
+                      No UPI QR payment required right now. The ₹400 registration fee balance is recorded as due.
                     </p>
                   </div>
                 )

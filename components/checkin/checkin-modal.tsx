@@ -33,6 +33,9 @@ export function CheckinModal({
   onSuccess,
   onScanNext,
 }: CheckinModalProps) {
+  const defaultFee = attendee?.personType === "volunteer" ? 400 : 600;
+  const halfFee = attendee?.personType === "volunteer" ? 200 : 300;
+
   const [paymentData, setPaymentData] = useState<CheckinPaymentData>({
     method: "UPI",
     status: "paid",
@@ -50,11 +53,12 @@ export function CheckinModal({
     if (attendee) {
       setError(null);
       setSuccessData(null);
+      const fee = attendee.personType === "volunteer" ? 400 : 600;
       if (attendee.isCheckedIn && attendee.checkin) {
         setPaymentData({
           method: attendee.checkin.payment_method || "UPI",
           status: attendee.checkin.payment_status || "paid",
-          amountPaid: attendee.checkin.amount_paid ?? 600,
+          amountPaid: attendee.checkin.amount_paid ?? fee,
           amountDue: attendee.checkin.amount_due ?? 0,
           note: attendee.checkin.payment_note || "",
         });
@@ -62,7 +66,7 @@ export function CheckinModal({
         setPaymentData({
           method: "UPI",
           status: "paid",
-          amountPaid: 600,
+          amountPaid: fee,
           amountDue: 0,
           note: "",
         });
@@ -77,18 +81,18 @@ export function CheckinModal({
   };
 
   const handlePaymentStatusChange = (status: PaymentStatus) => {
-    let amountPaid = 600;
+    let amountPaid = defaultFee;
     let amountDue = 0;
 
     if (status === "paid") {
-      amountPaid = 600;
+      amountPaid = defaultFee;
       amountDue = 0;
     } else if (status === "not_paid" || status === "later_pay") {
       amountPaid = 0;
-      amountDue = 600;
+      amountDue = defaultFee;
     } else if (status === "partially_paid") {
-      amountPaid = paymentData.amountPaid > 0 && paymentData.amountPaid < 600 ? paymentData.amountPaid : 300;
-      amountDue = 600 - amountPaid;
+      amountPaid = paymentData.amountPaid > 0 && paymentData.amountPaid < defaultFee ? paymentData.amountPaid : halfFee;
+      amountDue = defaultFee - amountPaid;
     }
 
     setPaymentData((prev) => ({
@@ -101,14 +105,14 @@ export function CheckinModal({
 
   const handlePartialAmountChange = (valStr: string) => {
     const parsed = parseInt(valStr.replace(/\D/g, ""), 10) || 0;
-    const clampedPaid = Math.min(600, Math.max(0, parsed));
-    const due = 600 - clampedPaid;
+    const clampedPaid = Math.min(defaultFee, Math.max(0, parsed));
+    const due = defaultFee - clampedPaid;
 
     setPaymentData((prev) => ({
       ...prev,
       amountPaid: clampedPaid,
       amountDue: due,
-      status: clampedPaid === 600 ? "paid" : clampedPaid === 0 ? "not_paid" : "partially_paid",
+      status: clampedPaid === defaultFee ? "paid" : clampedPaid === 0 ? "not_paid" : "partially_paid",
     }));
   };
 
@@ -198,7 +202,7 @@ export function CheckinModal({
               </span>
             </div>
             <DialogDescription id="checkin-modal-desc" className="text-xs text-muted-foreground mt-1">
-              Verify attendee identity, collect the ₹600 registration fee, and confirm entry.
+              Verify attendee identity, collect the ₹{defaultFee} registration fee, and confirm entry.
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -370,7 +374,7 @@ export function CheckinModal({
                   <span className="text-[10px] text-muted-foreground uppercase font-semibold block">
                     Event Fee
                   </span>
-                  <span className="text-xl font-extrabold text-foreground tabular-nums">₹600</span>
+                  <span className="text-xl font-extrabold text-foreground tabular-nums">₹{defaultFee}</span>
                 </div>
               </div>
 
@@ -403,7 +407,7 @@ export function CheckinModal({
                         : "border-border bg-background hover:bg-muted/40 text-foreground"
                     )}
                   >
-                    ✓ Full Paid (₹600)
+                    ✓ Full Paid (₹{defaultFee})
                   </button>
 
                   <button
@@ -416,7 +420,7 @@ export function CheckinModal({
                         : "border-border bg-background hover:bg-muted/40 text-foreground"
                     )}
                   >
-                    Half Paid (₹300)
+                    Half Paid (₹{halfFee})
                   </button>
 
                   <button
@@ -473,7 +477,7 @@ export function CheckinModal({
                       id="partial-amount"
                       type="number"
                       min={1}
-                      max={599}
+                      max={defaultFee - 1}
                       value={paymentData.amountPaid || ""}
                       onChange={(e) => handlePartialAmountChange(e.target.value)}
                       placeholder="Enter amount collected"
@@ -483,7 +487,7 @@ export function CheckinModal({
 
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-muted-foreground">Quick set:</span>
-                    {[100, 200, 300, 500].map((amt) => (
+                    {(defaultFee === 400 ? [100, 200, 300] : [100, 200, 300, 500]).map((amt) => (
                       <button
                         key={amt}
                         type="button"
@@ -576,7 +580,7 @@ export function CheckinModal({
                       Pay Later / Unpaid Selected (₹0 Due Now)
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      No UPI QR payment required right now. The ₹600 registration fee balance is recorded as due.
+                      No UPI QR payment required right now. The ₹{defaultFee} registration fee balance is recorded as due.
                     </p>
                   </div>
                 )
