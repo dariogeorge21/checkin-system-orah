@@ -21,6 +21,7 @@ import {
   UserGroupIcon,
   HandshakeIcon,
   TeacherIcon,
+  Invoice01Icon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,12 @@ const navItems = [
     href: "/participants",
     icon: UserGroupIcon,
     id: "nav-participants",
+  },
+  {
+    label: "Fees",
+    href: "/fees",
+    icon: Invoice01Icon,
+    id: "nav-fees",
   },
   {
     label: "Volunteers",
