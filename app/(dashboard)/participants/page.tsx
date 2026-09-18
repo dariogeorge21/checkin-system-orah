@@ -5,6 +5,12 @@ import { ParticipantsTable } from "@/components/participants/participants-table"
 import type { Participant } from "@/components/participants/participants-table";
 import { SpotRegistrationModal } from "@/components/participants/spot-registration-modal";
 import { TicketScannerModal } from "@/components/scanner/ticket-scanner-modal";
+import { ExportCsvModal } from "@/components/export/export-csv-modal";
+import {
+  PARTICIPANT_CSV_COLUMNS,
+  PARTICIPANT_SORT_OPTIONS,
+  PARTICIPANT_FILTER_OPTIONS,
+} from "@/components/export/participant-export-config";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function ParticipantsPage() {
@@ -14,6 +20,7 @@ export default function ParticipantsPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSpotModalOpen, setIsSpotModalOpen] = useState(false);
   const [isTicketScannerOpen, setIsTicketScannerOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const fetchParticipants = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -104,6 +111,30 @@ export default function ParticipantsPage() {
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             New Registration
+          </button>
+
+          <button
+            id="btn-participants-export-csv"
+            onClick={() => setIsExportModalOpen(true)}
+            disabled={loading || participants.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-all cursor-pointer"
+            title="Export participants data to CSV"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export CSV
           </button>
 
           <button
@@ -201,6 +232,19 @@ export default function ParticipantsPage() {
         open={isTicketScannerOpen}
         onOpenChange={setIsTicketScannerOpen}
         onCheckinSuccess={() => fetchParticipants(true)}
+      />
+
+      {/* Export to CSV Modal */}
+      <ExportCsvModal
+        open={isExportModalOpen}
+        onOpenChange={setIsExportModalOpen}
+        title="Export Participants to CSV"
+        description="Configure export filters, sort order, and preview sample records before exporting."
+        defaultFilename={`orah-participants-${new Date().toISOString().split("T")[0]}.csv`}
+        data={participants}
+        columns={PARTICIPANT_CSV_COLUMNS}
+        sortOptions={PARTICIPANT_SORT_OPTIONS}
+        filterOptions={PARTICIPANT_FILTER_OPTIONS}
       />
     </div>
   );

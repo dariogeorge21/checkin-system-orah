@@ -1,9 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { VolunteersTable } from "@/components/volunteers/volunteers-table";
 import type { VolunteerRegistration } from "@/components/volunteers/volunteers-table";
 import { VolunteerSpotRegistrationModal } from "@/components/volunteers/volunteer-spot-registration-modal";
+import { ExportCsvModal } from "@/components/export/export-csv-modal";
+import {
+  VOLUNTEER_CSV_COLUMNS,
+  VOLUNTEER_SORT_OPTIONS,
+  getVolunteerFilterOptions,
+} from "@/components/export/volunteer-export-config";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function VolunteersPage() {
@@ -12,6 +18,7 @@ export default function VolunteersPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSpotModalOpen, setIsSpotModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const fetchVolunteers = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -37,6 +44,10 @@ export default function VolunteersPage() {
   useEffect(() => {
     fetchVolunteers();
   }, [fetchVolunteers]);
+
+  const volunteerFilterOptions = useMemo(() => {
+    return getVolunteerFilterOptions(volunteers);
+  }, [volunteers]);
 
   return (
     <div className="space-y-6">
@@ -84,6 +95,30 @@ export default function VolunteersPage() {
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             New Registration
+          </button>
+
+          <button
+            id="btn-volunteers-export-csv"
+            onClick={() => setIsExportModalOpen(true)}
+            disabled={loading || volunteers.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-all cursor-pointer"
+            title="Export volunteers data to CSV"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export CSV
           </button>
 
           <button
@@ -200,6 +235,19 @@ export default function VolunteersPage() {
         open={isSpotModalOpen}
         onOpenChange={setIsSpotModalOpen}
         onSuccess={() => fetchVolunteers(true)}
+      />
+
+      {/* Export to CSV Modal */}
+      <ExportCsvModal
+        open={isExportModalOpen}
+        onOpenChange={setIsExportModalOpen}
+        title="Export Volunteers to CSV"
+        description="Configure export filters, sort order, and preview sample records before exporting."
+        defaultFilename={`orah-volunteers-${new Date().toISOString().split("T")[0]}.csv`}
+        data={volunteers}
+        columns={VOLUNTEER_CSV_COLUMNS}
+        sortOptions={VOLUNTEER_SORT_OPTIONS}
+        filterOptions={volunteerFilterOptions}
       />
     </div>
   );

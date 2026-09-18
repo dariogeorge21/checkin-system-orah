@@ -4,6 +4,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import { ResourcesTable } from "@/components/resources/resources-table";
 import type { ResourceRegistration } from "@/components/resources/resource-registration-types";
 import { ResourceRegistrationModal } from "@/components/resources/resource-registration-modal";
+import { ExportCsvModal } from "@/components/export/export-csv-modal";
+import {
+  RESOURCE_CSV_COLUMNS,
+  RESOURCE_SORT_OPTIONS,
+  RESOURCE_FILTER_OPTIONS,
+} from "@/components/export/resource-export-config";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function ResourcesPage() {
@@ -12,6 +18,7 @@ export default function ResourcesPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [pendingMigration, setPendingMigration] = useState(false);
 
   const fetchResources = useCallback(async (isRefresh = false) => {
@@ -93,6 +100,30 @@ export default function ResourcesPage() {
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             Resource Registration
+          </button>
+
+          <button
+            id="btn-resources-export-csv"
+            onClick={() => setIsExportModalOpen(true)}
+            disabled={loading || resources.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-all cursor-pointer"
+            title="Export resources data to CSV"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export CSV
           </button>
 
           <button
@@ -221,6 +252,19 @@ export default function ResourcesPage() {
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         onSuccess={() => fetchResources(true)}
+      />
+
+      {/* Export to CSV Modal */}
+      <ExportCsvModal
+        open={isExportModalOpen}
+        onOpenChange={setIsExportModalOpen}
+        title="Export Resource Persons to CSV"
+        description="Configure export filters, sort order, and preview sample records before exporting."
+        defaultFilename={`orah-resources-${new Date().toISOString().split("T")[0]}.csv`}
+        data={resources}
+        columns={RESOURCE_CSV_COLUMNS}
+        sortOptions={RESOURCE_SORT_OPTIONS}
+        filterOptions={RESOURCE_FILTER_OPTIONS}
       />
     </div>
   );
