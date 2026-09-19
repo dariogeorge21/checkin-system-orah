@@ -313,13 +313,14 @@ export function VolunteerSpotRegistrationModal({
                     )}
                   </div>
 
-                  {/* Ministry Selection */}
+                  {/* Ministry Selection — optional */}
                   <div className="space-y-1.5 sm:col-span-2">
                     <label
                       htmlFor="volunteer-spot-ministry"
                       className="text-xs font-semibold text-foreground flex items-center gap-1"
                     >
-                      Ministry <span className="text-destructive">*</span>
+                      Ministry
+                      <span className="text-[10px] text-muted-foreground font-normal">(optional)</span>
                     </label>
                     <select
                       id="volunteer-spot-ministry"
@@ -327,65 +328,110 @@ export function VolunteerSpotRegistrationModal({
                       onChange={(e) => handleInputChange("ministry", e.target.value)}
                       className={cn(
                         "w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all",
-                        errors.ministry ? "border-destructive focus:ring-destructive/30" : "border-border"
+                        errors.ministry ? "border-destructive focus:ring-destructive/30" : "border-border",
+                        formData.ministry === "Not Assigned" && "text-rose-600 dark:text-rose-400"
                       )}
                     >
                       <option value="">Select Ministry</option>
-                      {MINISTRY_OPTIONS.map((opt) => (
+                      {MINISTRY_OPTIONS.filter((opt) => opt !== "Not Assigned" && opt !== "Other").map((opt) => (
                         <option key={opt} value={opt}>
                           {opt}
                         </option>
                       ))}
+                      {/* Separator group for special options */}
+                      <option value="Not Assigned" className="text-rose-600 font-semibold">
+                        ⚠ Not Assigned
+                      </option>
+                      <option value="Other">Other (specify below)</option>
                     </select>
+                    {/* "Not Assigned" pill indicator */}
+                    {formData.ministry === "Not Assigned" && (
+                      <p className="text-[11px] font-medium text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                        <span>⚠</span> This volunteer has no ministry assignment yet.
+                      </p>
+                    )}
                     {errors.ministry && (
                       <p className="text-[11px] font-medium text-destructive">{errors.ministry}</p>
                     )}
                   </div>
 
-                  {/* Role (Default: Member, else Coordinator) */}
-                  <div className="space-y-2 sm:col-span-2">
-                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">
-                      Role <span className="text-destructive">*</span>
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {ROLE_OPTIONS.map((r) => {
-                        const isSelected = formData.role === r;
-                        return (
-                          <button
-                            key={r}
-                            type="button"
-                            onClick={() => handleInputChange("role", r)}
-                            className={cn(
-                              "flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer",
-                              isSelected
-                                ? "border-violet-600 bg-violet-500/10 ring-2 ring-violet-500/20 text-foreground font-semibold"
-                                : "border-border bg-background hover:bg-muted/40 text-muted-foreground"
-                            )}
-                          >
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium text-foreground">{r}</span>
-                              <span className="text-[11px] text-muted-foreground">
-                                {r === "Member" ? "Default team volunteer" : "Team lead / Coordinator"}
-                              </span>
-                            </div>
-                            <span
+                  {/* Conditional: Ministry === "Other" — free-text input */}
+                  {formData.ministry === "Other" && (
+                    <div className="space-y-1.5 sm:col-span-2 p-3.5 rounded-xl bg-muted/30 border border-border">
+                      <label
+                        htmlFor="volunteer-spot-ministryOther"
+                        className="text-xs font-semibold text-foreground flex items-center gap-1"
+                      >
+                        Specify Ministry <span className="text-destructive">*</span>
+                      </label>
+                      <input
+                        id="volunteer-spot-ministryOther"
+                        type="text"
+                        placeholder="e.g. Media & Communications"
+                        value={formData.ministryOther}
+                        onChange={(e) => handleInputChange("ministryOther", e.target.value)}
+                        className={cn(
+                          "w-full rounded-lg border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all",
+                          errors.ministryOther
+                            ? "border-destructive focus:ring-destructive/30"
+                            : "border-border"
+                        )}
+                      />
+                      {errors.ministryOther && (
+                        <p className="text-[11px] font-medium text-destructive">
+                          {errors.ministryOther}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Role — only shown when a real ministry is selected (not blank / Not Assigned) */}
+                  {formData.ministry && formData.ministry !== "Not Assigned" && (
+                    <div className="space-y-2 sm:col-span-2">
+                      <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+                        Role
+                        <span className="text-[10px] text-muted-foreground font-normal">(optional)</span>
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {ROLE_OPTIONS.map((r) => {
+                          const isSelected = formData.role === r;
+                          return (
+                            <button
+                              key={r}
+                              type="button"
+                              onClick={() => handleInputChange("role", r)}
                               className={cn(
-                                "size-4 rounded-full border flex items-center justify-center transition-all",
+                                "flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer",
                                 isSelected
-                                  ? "border-violet-600 bg-violet-600 text-white"
-                                  : "border-muted-foreground/40"
+                                  ? "border-violet-600 bg-violet-500/10 ring-2 ring-violet-500/20 text-foreground font-semibold"
+                                  : "border-border bg-background hover:bg-muted/40 text-muted-foreground"
                               )}
                             >
-                              {isSelected && <span className="size-1.5 rounded-full bg-white" />}
-                            </span>
-                          </button>
-                        );
-                      })}
+                              <div className="flex flex-col">
+                                <span className="text-sm font-medium text-foreground">{r}</span>
+                                <span className="text-[11px] text-muted-foreground">
+                                  {r === "Member" ? "Default team volunteer" : "Team lead / Coordinator"}
+                                </span>
+                              </div>
+                              <span
+                                className={cn(
+                                  "size-4 rounded-full border flex items-center justify-center transition-all",
+                                  isSelected
+                                    ? "border-violet-600 bg-violet-600 text-white"
+                                    : "border-muted-foreground/40"
+                                )}
+                              >
+                                {isSelected && <span className="size-1.5 rounded-full bg-white" />}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {errors.role && (
+                        <p className="text-[11px] font-medium text-destructive">{errors.role}</p>
+                      )}
                     </div>
-                    {errors.role && (
-                      <p className="text-[11px] font-medium text-destructive">{errors.role}</p>
-                    )}
-                  </div>
+                  )}
 
                   {/* Desk Confirmation checkbox */}
                   <div className="sm:col-span-2 pt-2">

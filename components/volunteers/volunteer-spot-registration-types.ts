@@ -18,7 +18,7 @@ export interface VolunteerSpotPaymentData {
 }
 
 export const MINISTRY_OPTIONS = [
-  "General",
+  "General Coordinator",
   "Program",
   "Media",
   "Music",
@@ -40,6 +40,7 @@ export const MINISTRY_OPTIONS = [
   "Medical",
   "Screen",
   "Not Assigned",
+  "Other",
 ] as const;
 
 export type MinistryOption = (typeof MINISTRY_OPTIONS)[number];
@@ -80,16 +81,22 @@ export function handleVolunteerConditionalResets(
   field: keyof VolunteerSpotFormData,
   newValue: string
 ): VolunteerSpotFormData {
-  return { ...prev, [field]: newValue };
+  const updated = { ...prev, [field]: newValue };
+  // Clear the free-text field when switching away from "Other"
+  if (field === "ministry" && newValue !== "Other") {
+    updated.ministryOther = "";
+  }
+  return updated;
 }
 
 /**
- * Validates the volunteer spot registration form
+ * Validates the volunteer spot registration form.
+ * Ministry and Role are OPTIONAL — only Name, Phone, and Confirmation are required.
  */
 export function validateVolunteerSpotForm(data: VolunteerSpotFormData): Record<string, string> {
   const errors: Record<string, string> = {};
 
-  // 1. Full Name
+  // 1. Full Name (required)
   const trimmedName = data.name.trim();
   if (!trimmedName) {
     errors.name = "Full name is required.";
@@ -101,7 +108,7 @@ export function validateVolunteerSpotForm(data: VolunteerSpotFormData): Record<s
     errors.name = "Name must contain only letters, spaces, hyphens, or apostrophes.";
   }
 
-  // 2. Phone Number
+  // 2. Phone Number (required)
   const rawPhone = data.phone.trim();
   if (!rawPhone) {
     errors.phone = "Phone number is required.";
@@ -116,19 +123,29 @@ export function validateVolunteerSpotForm(data: VolunteerSpotFormData): Record<s
     }
   }
 
-  // 3. Ministry
-  if (!data.ministry) {
-    errors.ministry = "Please select a ministry.";
-  } else if (!MINISTRY_OPTIONS.includes(data.ministry as any)) {
-    errors.ministry = "Please select a valid ministry.";
+  // 3. Ministry (optional — validate only when a value is chosen)
+  if (data.ministry && data.ministry !== "Not Assigned") {
+    if (!MINISTRY_OPTIONS.includes(data.ministry as MinistryOption)) {
+      errors.ministry = "Please select a valid ministry.";
+    }
+    // "Other" requires a free-text specification
+    if (data.ministry === "Other") {
+      const trimmedOther = data.ministryOther.trim();
+      if (!trimmedOther) {
+        errors.ministryOther = "Please specify the ministry.";
+      } else if (trimmedOther.length < 2) {
+        errors.ministryOther = "Ministry specification must be at least 2 characters.";
+      } else if (trimmedOther.length > 100) {
+        errors.ministryOther = "Ministry specification must not exceed 100 characters.";
+      } else if (!/^[A-Za-z0-9\s\-'.,()]+$/.test(trimmedOther)) {
+        errors.ministryOther = "Ministry specification contains invalid characters.";
+      }
+    }
   }
 
-  // 4. Role
-  if (!data.role || !ROLE_OPTIONS.includes(data.role)) {
-    errors.role = "Please select a valid role (Member or Coordinator).";
-  }
+  // 4. Role — optional, no error thrown (hidden when ministry is unassigned/blank).
 
-  // 5. Desk Confirmation
+  // 5. Desk Confirmation (required)
   if (!data.confirmed) {
     errors.confirmed = "You must confirm the volunteer details.";
   }
