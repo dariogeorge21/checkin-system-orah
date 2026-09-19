@@ -348,7 +348,7 @@ export function SpotRegistrationModal({
                       className="text-xs font-semibold text-foreground flex items-center gap-1"
                     >
                       Date of Birth <span className="text-destructive">*</span>
-                      <span className="text-[10px] text-muted-foreground font-normal">(2000–2008)</span>
+                       <span className="text-[10px] text-muted-foreground font-normal">(1995–2010)</span>
                     </label>
                     <input
                       id="spot-dob"

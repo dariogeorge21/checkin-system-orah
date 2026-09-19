@@ -218,8 +218,8 @@ export function validateSpotRegistrationForm(data: SpotRegistrationFormData): Re
 
       if (!isValidCalendarDate) {
         errors.dob = "Enter a valid calendar date.";
-      } else if (!(year > 1999 && year < 2009)) {
-        errors.dob = "Date of birth must be between 1999 and 2009.";
+      } else if (!(year >= 1995 && year <= 2010)) {
+        errors.dob = "Date of birth must be between 1995 and 2010.";
       }
     }
   }
