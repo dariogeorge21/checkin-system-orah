@@ -151,32 +151,6 @@ export default function VolunteersPage() {
         </div>
       </div>
 
-      {/* Note banner */}
-      <div className="flex items-start gap-3 rounded-xl border border-violet-500/20 bg-violet-500/5 p-4">
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="mt-0.5 shrink-0 text-violet-500"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <line x1="12" y1="8" x2="12" y2="12" />
-          <line x1="12" y1="16" x2="12.01" y2="16" />
-        </svg>
-        <div className="text-sm text-muted-foreground">
-          <strong className="text-foreground">Migration:</strong> Apply{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">
-            migrations/003_volunteer_spot_registration.sql
-          </code>{" "}
-          in your Supabase SQL editor to ensure all volunteer spot registration tables and permissions are active.
-        </div>
-      </div>
-
       {/* Error Banner */}
       {error && (
         <div className="flex items-center justify-between rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
