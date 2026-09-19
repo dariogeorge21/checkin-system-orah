@@ -618,6 +618,8 @@ export function VolunteerSpotRegistrationModal({
                 paymentData.amountPaid > 0 ? (
                   <PaymentQrCode
                     amount={paymentData.amountPaid}
+                    upiId="7838403506-2@ybl"
+                    payeeName="Dario George"
                     note={`${formData.name.slice(0, 15)} Vol Reg`}
                   />
                 ) : (
