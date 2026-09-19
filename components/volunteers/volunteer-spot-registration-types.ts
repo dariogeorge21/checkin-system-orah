@@ -19,13 +19,27 @@ export interface VolunteerSpotPaymentData {
 
 export const MINISTRY_OPTIONS = [
   "General",
-  "Arts",
+  "Program",
+  "Media",
   "Music",
+  "Confession",
   "Finance",
-  "AV",
   "Intercession",
-  "Local",
-  "Other",
+  "AV",
+  "Arts",
+  "Counselling",
+  "Kitchen",
+  "Liturgy",
+  "Prolife",
+  "Local Arrangement",
+  "Hall Arrangement",
+  "Accommodation",
+  "Drinking Water",
+  "Office",
+  "Resource Caring",
+  "Medical",
+  "Screen",
+  "Not Assigned",
 ] as const;
 
 export type MinistryOption = (typeof MINISTRY_OPTIONS)[number];
@@ -66,13 +80,7 @@ export function handleVolunteerConditionalResets(
   field: keyof VolunteerSpotFormData,
   newValue: string
 ): VolunteerSpotFormData {
-  const updated = { ...prev, [field]: newValue };
-
-  if (field === "ministry" && newValue !== "Other") {
-    updated.ministryOther = "";
-  }
-
-  return updated;
+  return { ...prev, [field]: newValue };
 }
 
 /**
@@ -113,20 +121,6 @@ export function validateVolunteerSpotForm(data: VolunteerSpotFormData): Record<s
     errors.ministry = "Please select a ministry.";
   } else if (!MINISTRY_OPTIONS.includes(data.ministry as any)) {
     errors.ministry = "Please select a valid ministry.";
-  }
-
-  // Conditional: Other Ministry
-  if (data.ministry === "Other") {
-    const trimmedOther = data.ministryOther.trim();
-    if (!trimmedOther) {
-      errors.ministryOther = "Please specify the ministry.";
-    } else if (trimmedOther.length < 2) {
-      errors.ministryOther = "Ministry specification must be at least 2 characters.";
-    } else if (trimmedOther.length > 100) {
-      errors.ministryOther = "Ministry specification must not exceed 100 characters.";
-    } else if (!/^[A-Za-z0-9\s\-'.,()]+$/.test(trimmedOther)) {
-      errors.ministryOther = "Ministry specification contains invalid characters.";
-    }
   }
 
   // 4. Role
