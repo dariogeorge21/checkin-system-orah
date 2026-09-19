@@ -320,7 +320,7 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
       </div>
 
       {/* Main Content Grid: Search Results & Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      <div className=" gap-6 items-start">
         {/* Search Results Column (2 Cols) */}
         <div className="lg:col-span-2 space-y-3">
           <div className="flex items-center justify-between px-1">
@@ -527,71 +527,7 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
             </div>
           )}
         </div>
-
-        {/* Live Desk Feed Column (1 Col) */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <div className="flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Live Desk Activity
-              </h4>
-            </div>
-
-            <button
-              onClick={fetchRecentCheckins}
-              disabled={recentLoading}
-              className="text-[11px] text-primary hover:underline cursor-pointer disabled:opacity-50"
-            >
-              {recentLoading ? "Refreshing…" : "Refresh"}
-            </button>
-          </div>
-
-          <div className="rounded-2xl border border-border bg-card p-4 space-y-3 shadow-xs">
-            {recentCheckins.length === 0 ? (
-              <div className="py-8 text-center text-xs text-muted-foreground">
-                No check-ins recorded yet during this session.
-              </div>
-            ) : (
-              <div className="divide-y divide-border/60">
-                {recentCheckins.map((item) => (
-                  <div key={item.id} className="py-2.5 first:pt-0 last:pb-0 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="font-semibold text-xs text-foreground truncate">
-                          {item.name}
-                        </span>
-                        {item.personType === "participant" && item.groupNumber && (
-                          <span className="shrink-0 text-[9px] font-black px-1.5 py-0.2 rounded-md bg-primary/10 text-primary border border-primary/20 tabular-nums">
-                            Grp {item.groupNumber}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                        ₹{item.amountPaid}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                      <span className="truncate">
-                        {item.personType === "volunteer" ? "Volunteer" : "Participant"} •{" "}
-                        {item.paymentMethod || "UPI"}
-                      </span>
-                      <span className="text-[10px] tabular-nums">
-                        {new Date(item.checkedInAt).toLocaleTimeString("en-IN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
       </div>
-
       {/* Modals */}
       <CheckinModal
         attendee={selectedAttendee}
