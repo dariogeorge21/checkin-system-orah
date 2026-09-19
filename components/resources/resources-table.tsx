@@ -83,20 +83,12 @@ export function ResourcesTable({ resources, onResourceUpdated }: ResourcesTableP
 
   return (
     <div className="space-y-4">
-      {/* Search & Filter Toolbar */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+        {/* Search */}
+        <div className="relative w-full sm:w-auto flex-1 min-w-[200px] sm:max-w-sm">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.3-4.3" />
             </svg>
@@ -121,14 +113,14 @@ export function ResourcesTable({ resources, onResourceUpdated }: ResourcesTableP
             setFilterStatus(e.target.value as typeof filterStatus);
             setPage(1);
           }}
-          className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[oklch(0.55_0.22_270)]/30 transition-all cursor-pointer"
+          className="rounded-lg border border-border bg-background px-3 py-2 text-xs sm:text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[oklch(0.55_0.22_270)]/30 transition-all cursor-pointer flex-1 sm:flex-initial min-w-[120px]"
         >
           <option value="ALL">All Status</option>
           <option value="checked_in">Checked In</option>
           <option value="pending">Pending</option>
         </select>
 
-        <span className="ml-auto text-xs text-muted-foreground">
+        <span className="w-full sm:w-auto sm:ml-auto text-xs text-muted-foreground">
           {filtered.length} result{filtered.length !== 1 ? "s" : ""}
         </span>
       </div>

@@ -67,17 +67,17 @@ export function AppHeader({ user }: { user: User }) {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/80 backdrop-blur-sm px-4">
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-2 sm:gap-3 border-b border-border bg-background/80 backdrop-blur-sm px-2.5 sm:px-4">
         {/* Sidebar toggle */}
-        <SidebarTrigger className="text-muted-foreground hover:text-foreground" id="sidebar-trigger" />
+        <SidebarTrigger className="text-muted-foreground hover:text-foreground shrink-0" id="sidebar-trigger" />
 
         {/* Divider */}
-        <div className="h-4 w-px bg-border" />
+        <div className="h-4 w-px bg-border shrink-0" />
 
         {/* Page title */}
-        <div className="flex flex-col leading-none">
-          <span className="text-sm font-semibold text-foreground">{page.title}</span>
-          <span className="text-[10px] text-muted-foreground">{page.subtitle}</span>
+        <div className="flex flex-col leading-none min-w-0">
+          <span className="text-sm font-semibold text-foreground truncate">{page.title}</span>
+          <span className="text-[10px] text-muted-foreground truncate hidden xs:block">{page.subtitle}</span>
         </div>
 
         {/* Spacer */}
@@ -88,7 +88,7 @@ export function AppHeader({ user }: { user: User }) {
           id="header-scan-qr-btn"
           type="button"
           onClick={() => setIsScannerOpen(true)}
-          className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/20 px-3 py-1.5 text-xs text-primary font-semibold transition-all cursor-pointer shadow-2xs"
+          className="flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/20 px-2.5 sm:px-3 py-1.5 text-xs text-primary font-semibold transition-all cursor-pointer shadow-2xs shrink-0"
           title="Scan participant ticket QR (Ctrl+S)"
         >
           <svg
@@ -100,11 +100,13 @@ export function AppHeader({ user }: { user: User }) {
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
+            className="shrink-0"
           >
             <rect width="14" height="14" x="5" y="5" rx="2" />
             <path d="M9 9h6v6H9z" />
           </svg>
-          <span>Scan Ticket</span>
+          <span className="hidden sm:inline">Scan Ticket</span>
+          <span className="sm:hidden text-xs">Scan</span>
           <kbd className="hidden md:inline rounded border border-primary/30 bg-primary/10 px-1 py-0.2 text-[9px] font-mono text-primary font-bold">
             Ctrl S
           </kbd>

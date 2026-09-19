@@ -78,7 +78,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Summary strip */}
-      <div className="flex flex-wrap gap-4 rounded-2xl border border-border bg-muted/30 p-4">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4 rounded-2xl border border-border bg-muted/30 p-3.5 sm:p-4">
         <div className="text-sm">
           <span className="text-muted-foreground">Total Participants: </span>
           <span className="font-semibold text-foreground tabular-nums">{stats.totalParticipants}</span>

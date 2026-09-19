@@ -99,22 +99,27 @@ export function ResourceRegistrationModal({
   };
 
   const handleClose = () => {
+    const scrollY = window.scrollY;
     onOpenChange(false);
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: scrollY, behavior: "instant" });
+    });
     setTimeout(() => {
       handleReset();
-    }, 200);
+      window.scrollTo({ top: scrollY, behavior: "instant" });
+    }, 250);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="max-w-lg max-h-[92vh] flex flex-col p-0 overflow-hidden bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl"
+        className="w-full max-w-[calc(100%-1rem)] sm:max-w-lg h-[92dvh] sm:max-h-[92dvh] flex flex-col p-0 bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl"
         aria-describedby="resource-registration-desc"
       >
         {/* Modal Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-border bg-muted/20">
+        <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4 border-b border-border bg-muted/20">
           <DialogHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2 flex-wrap pr-8">
               <div className="flex items-center gap-2.5">
                 <span className="flex size-7 items-center justify-center rounded-lg font-bold text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                   RES
@@ -134,7 +139,7 @@ export function ResourceRegistrationModal({
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5">
           {successData ? (
             /* Success View */
             <div className="space-y-6 py-2 text-center">

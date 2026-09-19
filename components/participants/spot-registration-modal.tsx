@@ -227,9 +227,9 @@ export function SpotRegistrationModal({
       >
 
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-border bg-muted/20">
+        <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4 border-b border-border bg-muted/20">
           <DialogHeader>
-            <div className="flex items-center justify-between gap-2 flex-wrap">
+            <div className="flex items-center justify-between gap-2 flex-wrap pr-8">
               <div className="flex items-center gap-2">
                 <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
                   SPOT
@@ -285,7 +285,7 @@ export function SpotRegistrationModal({
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-6">
           {submitError && (
             <div className="p-3.5 text-xs rounded-xl border border-destructive/30 bg-destructive/10 text-destructive flex items-center justify-between">
               <span>{submitError}</span>
@@ -1188,7 +1188,7 @@ export function SpotRegistrationModal({
 
         {/* Modal Footer */}
         {currentStep !== "success" && (
-          <div className="px-6 py-4 border-t border-border bg-muted/20 flex items-center justify-between">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-border bg-muted/20 flex flex-wrap items-center justify-between gap-2">
             {currentStep === "form" ? (
               <>
                 <button

@@ -188,8 +188,8 @@ export function ExportCsvModal<T>({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-4xl max-h-[92vh] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader className="space-y-1">
+      <DialogContent className="w-full max-w-[calc(100%-1rem)] sm:max-w-4xl max-h-[92dvh] overflow-y-auto p-4 sm:p-6">
+        <DialogHeader className="space-y-1 pr-8">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <DialogTitle className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
               <svg
@@ -438,7 +438,7 @@ export function ExportCsvModal<T>({
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-2 border-t border-border/70">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2 border-t border-border/70">
           <button
             type="button"
             onClick={() => onOpenChange(false)}

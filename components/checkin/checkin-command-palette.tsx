@@ -90,7 +90,7 @@ export function CheckinCommandPalette({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="max-w-2xl p-0 overflow-hidden bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl gap-0"
+          className="w-full max-w-[calc(100%-1rem)] sm:max-w-2xl max-h-[85dvh] flex flex-col p-0 overflow-hidden bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl gap-0"
           aria-describedby="palette-desc"
         >
           {/* Accessible Title & Description */}
@@ -102,7 +102,7 @@ export function CheckinCommandPalette({
           </div>
 
           {/* Search Header */}
-          <div className="relative flex items-center px-4 py-3.5 border-b border-border bg-muted/20">
+          <div className="relative flex items-center px-4 py-3.5 pr-10 border-b border-border bg-muted/20">
             <svg
               width="18"
               height="18"

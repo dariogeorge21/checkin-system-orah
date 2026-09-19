@@ -54,7 +54,7 @@ export default function VolunteersPage() {
       <title>Volunteers | Orah</title>
 
       {/* Page heading */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-bold tracking-tight text-foreground">
@@ -74,7 +74,7 @@ export default function VolunteersPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           <button
             id="btn-new-volunteer-registration"
             onClick={() => setIsSpotModalOpen(true)}

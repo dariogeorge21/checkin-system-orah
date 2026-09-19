@@ -24,7 +24,7 @@ export default async function DashboardLayout({
         <AppSidebar />
         <div className="flex flex-1 flex-col min-w-0">
           <AppHeader user={user} />
-          <main className="flex-1 p-6 overflow-auto">{children}</main>
+          <main className="flex-1 p-3.5 sm:p-6 overflow-auto min-w-0">{children}</main>
         </div>
       </div>
     </SidebarProvider>

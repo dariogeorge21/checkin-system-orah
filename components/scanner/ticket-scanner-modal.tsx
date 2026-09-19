@@ -136,15 +136,15 @@ export function TicketScannerModal({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="max-w-2xl p-0 overflow-hidden bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl gap-0"
+          className="w-full max-w-[calc(100%-1rem)] sm:max-w-2xl max-h-[92dvh] flex flex-col p-0 bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl gap-0 overflow-hidden"
           aria-describedby="ticket-scanner-desc"
         >
           {/* Header */}
-          <div className="px-6 pt-5 pb-4 border-b border-border bg-muted/20">
+          <div className="px-4 sm:px-6 pt-5 pb-3 sm:pb-4 border-b border-border bg-muted/20">
             <DialogHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-8">
                 <div className="flex items-center gap-2">
-                  <div className="size-8 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold">
+                  <div className="size-8 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold shrink-0">
                     <svg
                       width="18"
                       height="18"
@@ -170,7 +170,7 @@ export function TicketScannerModal({
                 </div>
 
                 {/* Mode Selector Pill */}
-                <div className="flex items-center rounded-xl bg-muted p-0.5 border border-border">
+                <div className="flex items-center rounded-xl bg-muted p-0.5 border border-border self-start sm:self-auto shrink-0">
                   <button
                     type="button"
                     onClick={() => setActiveTab("camera")}
@@ -204,7 +204,7 @@ export function TicketScannerModal({
           </div>
 
           {/* Scanner Viewport / Content */}
-          <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+          <div className="flex-1 p-4 sm:p-6 space-y-4 overflow-y-auto">
             {/* Error Notification */}
             {scanError && (
               <div className="p-3.5 rounded-2xl border border-destructive/30 bg-destructive/10 text-destructive text-xs flex items-start justify-between gap-2 animate-in fade-in slide-in-from-top-2">

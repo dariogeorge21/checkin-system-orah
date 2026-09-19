@@ -119,7 +119,7 @@ export function FastCheckinStation({ onRefreshStats }: FastCheckinStationProps) 
   return (
     <section className="space-y-6">
       {/* Front Desk Header Card */}
-      <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card to-muted/30 p-6 shadow-sm">
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card to-muted/30 p-4 sm:p-6 shadow-sm">
         {/* Decorative background glow */}
         <div className="absolute top-0 right-0 -mt-8 -mr-8 size-64 rounded-full bg-[oklch(0.55_0.22_270)]/5 blur-3xl pointer-events-none" />
 

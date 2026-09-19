@@ -133,9 +133,9 @@ export function FeesTable({ participants, onParticipantUpdated }: FeesTableProps
     <div className="space-y-4">
       {/* Search & Filter Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-[280px]">
+        <div className="flex flex-wrap items-center gap-2.5 flex-1 w-full sm:w-auto">
           {/* Search box */}
-          <div className="relative flex-1 min-w-[220px] max-w-sm">
+          <div className="relative flex-1 min-w-[180px] sm:max-w-sm">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="11" cy="11" r="8" />
@@ -158,7 +158,7 @@ export function FeesTable({ participants, onParticipantUpdated }: FeesTableProps
           <select
             value={paymentStatusFilter}
             onChange={(e) => handleFilterChange(setPaymentStatusFilter, e.target.value)}
-            className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground shadow-2xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+            className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground shadow-2xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer flex-1 sm:flex-initial min-w-[130px]"
           >
             <option value="ALL">All Payment Statuses</option>
             <option value="paid">Full Paid (₹600)</option>
@@ -171,7 +171,7 @@ export function FeesTable({ participants, onParticipantUpdated }: FeesTableProps
           <select
             value={paymentMethodFilter}
             onChange={(e) => handleFilterChange(setPaymentMethodFilter, e.target.value)}
-            className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground shadow-2xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+            className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground shadow-2xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer flex-1 sm:flex-initial min-w-[120px]"
           >
             <option value="ALL">All Payment Methods</option>
             <option value="CASH">Cash Paid</option>
@@ -183,7 +183,7 @@ export function FeesTable({ participants, onParticipantUpdated }: FeesTableProps
           <select
             value={regTypeFilter}
             onChange={(e) => handleFilterChange(setRegTypeFilter, e.target.value)}
-            className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground shadow-2xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+            className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground shadow-2xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer flex-1 sm:flex-initial min-w-[110px]"
           >
             <option value="ALL">All Reg Types</option>
             <option value="ONLINE">Online</option>
@@ -191,7 +191,7 @@ export function FeesTable({ participants, onParticipantUpdated }: FeesTableProps
           </select>
         </div>
 
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground w-full sm:w-auto sm:ml-auto">
           Showing <strong className="text-foreground">{filteredParticipants.length}</strong> of {participants.length} participants
         </div>
       </div>

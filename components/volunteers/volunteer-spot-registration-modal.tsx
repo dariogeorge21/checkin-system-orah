@@ -162,23 +162,28 @@ export function VolunteerSpotRegistrationModal({
   };
 
   const handleClose = () => {
+    const scrollY = window.scrollY;
     onOpenChange(false);
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: scrollY, behavior: "instant" });
+    });
     // Reset state after transition finishes
     setTimeout(() => {
       handleRegisterAnother();
+      window.scrollTo({ top: scrollY, behavior: "instant" });
     }, 300);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl"
+        className="w-full max-w-[calc(100%-1rem)] sm:max-w-2xl h-[92dvh] sm:max-h-[90dvh] flex flex-col p-0 bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl"
         aria-describedby="volunteer-spot-reg-description"
       >
         {/* Header */}
-        <div className="px-6 pt-6 pb-4 border-b border-border bg-muted/20">
+        <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4 border-b border-border bg-muted/20">
           <DialogHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2 flex-wrap pr-8">
               <div className="flex items-center gap-2">
                 <span className="flex size-7 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 font-bold text-xs">
                   SPOT
@@ -234,7 +239,7 @@ export function VolunteerSpotRegistrationModal({
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5 space-y-6">
           {submitError && (
             <div className="p-3.5 text-xs rounded-xl border border-destructive/30 bg-destructive/10 text-destructive flex items-center justify-between">
               <span>{submitError}</span>
@@ -754,7 +759,7 @@ export function VolunteerSpotRegistrationModal({
 
         {/* Modal Footer */}
         {currentStep !== "success" && (
-          <div className="px-6 py-4 border-t border-border bg-muted/20 flex items-center justify-between">
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-border bg-muted/20 flex flex-wrap items-center justify-between gap-2">
             {currentStep === "form" ? (
               <>
                 <button
