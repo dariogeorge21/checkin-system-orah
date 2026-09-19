@@ -60,8 +60,8 @@ export default function VolunteersPage() {
             <h2 className="text-2xl font-bold tracking-tight text-foreground">
               Volunteers
             </h2>
-            <span className="inline-flex items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-600 dark:text-violet-400">
-              Prototype
+            <span className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              Voluntary Fee / Donation
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -218,6 +218,13 @@ export default function VolunteersPage() {
               <span className="text-muted-foreground">Offline: </span>
               <span className="font-semibold text-blue-600 dark:text-blue-400 tabular-nums">
                 {volunteers.filter((v) => v.registration_type === "OFFLINE" || (v.registration_type as any) === "SPOT").length}
+              </span>
+            </div>
+            <div className="hidden sm:block h-4 w-px bg-border self-center" />
+            <div className="text-sm">
+              <span className="text-muted-foreground">Fee Policy: </span>
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                Voluntary Donation
               </span>
             </div>
           </div>

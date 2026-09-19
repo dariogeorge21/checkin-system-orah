@@ -35,7 +35,9 @@ function VerifiedBadge({ is_verified, checkin }: { is_verified: boolean; checkin
       </span>
       {is_verified && checkin && (
         <span className="block text-[10px] text-muted-foreground font-medium">
-          {checkin.payment_method || "Paid"} • ₹{checkin.amount_paid}
+          {checkin.amount_paid > 0
+            ? `${checkin.payment_method || "Paid"} • ₹${checkin.amount_paid}`
+            : "Free / ₹0"}
         </span>
       )}
     </div>
@@ -89,10 +91,16 @@ export function VolunteersTable({ volunteers, onVolunteerUpdated }: VolunteersTa
         filterStatus === "ALL" ||
         (filterStatus === "verified" && v.is_verified) ||
         (filterStatus === "pending" && !v.is_verified);
-      const matchesPayment =
-        filterPayment === "ALL" ||
-        (v.checkin && v.checkin.payment_status === filterPayment) ||
-        (!v.checkin && filterPayment === "not_paid");
+      let matchesPayment = true;
+      if (filterPayment === "paid") {
+        matchesPayment = !!v.checkin && v.checkin.amount_paid > 0;
+      } else if (filterPayment === "zero") {
+        matchesPayment = !!v.checkin && v.checkin.amount_paid === 0;
+      } else if (filterPayment === "not_paid") {
+        matchesPayment = !v.checkin || v.checkin.payment_status === "not_paid";
+      } else if (filterPayment !== "ALL") {
+        matchesPayment = !!v.checkin && v.checkin.payment_status === filterPayment;
+      }
       return matchesSearch && matchesType && matchesStatus && matchesPayment;
     });
   }, [volunteers, search, filterType, filterStatus, filterPayment]);
@@ -167,8 +175,8 @@ export function VolunteersTable({ volunteers, onVolunteerUpdated }: VolunteersTa
           className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-[oklch(0.55_0.22_270)]/30 transition-all"
         >
           <option value="ALL">All Payments</option>
-          <option value="paid">Paid (₹400)</option>
-          <option value="partially_paid">Partial</option>
+          <option value="paid">Donation Paid</option>
+          <option value="zero">Free (₹0)</option>
           <option value="later_pay">Pay Later</option>
           <option value="not_paid">Unpaid</option>
         </select>

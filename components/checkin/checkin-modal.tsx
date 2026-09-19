@@ -34,8 +34,9 @@ export function CheckinModal({
   onSuccess,
   onScanNext,
 }: CheckinModalProps) {
-  const defaultFee = attendee?.personType === "volunteer" ? 400 : 600;
-  const halfFee = attendee?.personType === "volunteer" ? 200 : 300;
+  const isVolunteer = attendee?.personType === "volunteer";
+  const defaultFee = 600; // Participant standard strict fee
+  const halfFee = 300;
 
   const [paymentData, setPaymentData] = useState<CheckinPaymentData>({
     method: "UPI",
@@ -59,23 +60,46 @@ export function CheckinModal({
     if (attendee && open) {
       setError(null);
       setSuccessData(null);
-      const fee = attendee.personType === "volunteer" ? 400 : 600;
-      if (attendee.isCheckedIn && attendee.checkin) {
-        setPaymentData({
-          method: attendee.checkin.payment_method || "UPI",
-          status: attendee.checkin.payment_status || "paid",
-          amountPaid: attendee.checkin.amount_paid ?? fee,
-          amountDue: attendee.checkin.amount_due ?? 0,
-          note: attendee.checkin.payment_note || "",
-        });
+
+      if (attendee.personType === "volunteer") {
+        // Volunteers have no strict fee (free-will donation)
+        if (attendee.isCheckedIn && attendee.checkin) {
+          setPaymentData({
+            method: attendee.checkin.payment_method || "UPI",
+            status: attendee.checkin.payment_status || "paid",
+            amountPaid: attendee.checkin.amount_paid ?? 0,
+            amountDue: attendee.checkin.amount_due ?? 0,
+            note: attendee.checkin.payment_note || "",
+          });
+        } else {
+          setPaymentData({
+            method: "UPI",
+            status: "paid",
+            amountPaid: 0,
+            amountDue: 0,
+            note: "",
+          });
+        }
       } else {
-        setPaymentData({
-          method: "UPI",
-          status: "paid",
-          amountPaid: fee,
-          amountDue: 0,
-          note: "",
-        });
+        // Participants have a strict ₹600 fee
+        const fee = 600;
+        if (attendee.isCheckedIn && attendee.checkin) {
+          setPaymentData({
+            method: attendee.checkin.payment_method || "UPI",
+            status: attendee.checkin.payment_status || "paid",
+            amountPaid: attendee.checkin.amount_paid ?? fee,
+            amountDue: attendee.checkin.amount_due ?? 0,
+            note: attendee.checkin.payment_note || "",
+          });
+        } else {
+          setPaymentData({
+            method: "UPI",
+            status: "paid",
+            amountPaid: fee,
+            amountDue: 0,
+            note: "",
+          });
+        }
       }
 
       // Handle group number (STRICTLY for participants, NOT volunteers or resources)
@@ -112,6 +136,7 @@ export function CheckinModal({
     setPaymentData((prev) => ({ ...prev, method }));
   };
 
+  // Participant strict fee handlers
   const handlePaymentStatusChange = (status: PaymentStatus) => {
     let amountPaid = defaultFee;
     let amountDue = 0;
@@ -145,6 +170,35 @@ export function CheckinModal({
       amountPaid: clampedPaid,
       amountDue: due,
       status: clampedPaid === defaultFee ? "paid" : clampedPaid === 0 ? "not_paid" : "partially_paid",
+    }));
+  };
+
+  // Volunteer voluntary donation handlers
+  const handleVolunteerDonationChange = (valStr: string) => {
+    const parsed = Math.max(0, parseInt(valStr.replace(/\D/g, ""), 10) || 0);
+    setPaymentData((prev) => ({
+      ...prev,
+      amountPaid: parsed,
+      amountDue: 0,
+      status: "paid",
+    }));
+  };
+
+  const handleVolunteerQuickDonation = (amt: number) => {
+    setPaymentData((prev) => ({
+      ...prev,
+      amountPaid: amt,
+      amountDue: 0,
+      status: "paid",
+    }));
+  };
+
+  const handleVolunteerPayLater = () => {
+    setPaymentData((prev) => ({
+      ...prev,
+      amountPaid: 0,
+      amountDue: 0,
+      status: "later_pay",
     }));
   };
 
@@ -253,7 +307,9 @@ export function CheckinModal({
               </span>
             </div>
             <DialogDescription id="checkin-modal-desc" className="text-xs text-muted-foreground mt-1">
-              Verify attendee identity, collect the ₹{defaultFee} registration fee, and confirm entry.
+              {isVolunteer
+                ? "Verify volunteer identity, record voluntary contribution (if any), and confirm entry."
+                : `Verify attendee identity, collect the ₹${defaultFee} registration fee, and confirm entry.`}
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -451,139 +507,217 @@ export function CheckinModal({
 
                   <div className="text-right">
                     <span className="text-[10px] text-muted-foreground uppercase font-semibold block">
-                      Event Fee
+                      {isVolunteer ? "Volunteer Fee" : "Event Fee"}
                     </span>
-                    <span className="text-xl font-extrabold text-foreground tabular-nums">₹{defaultFee}</span>
+                    <span className="text-xl font-extrabold text-foreground tabular-nums">
+                      {isVolunteer
+                        ? paymentData.amountPaid > 0
+                          ? `₹${paymentData.amountPaid}`
+                          : "Free (₹0)"
+                        : `₹${defaultFee}`}
+                    </span>
                   </div>
                 </div>
               </div>
 
 
-              {/* 1. Payment Status Selector */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    1. Payment Status
-                  </label>
-                  <div className="flex items-center gap-2 text-xs font-medium">
-                    <span className="text-muted-foreground">
-                      Collected: <strong className="text-emerald-600 dark:text-emerald-400 tabular-nums">₹{paymentData.amountPaid}</strong>
-                    </span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-muted-foreground">
-                      Due: <strong className={cn("tabular-nums", paymentData.amountDue > 0 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-foreground")}>₹{paymentData.amountDue}</strong>
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentStatusChange("paid")}
-                    className={cn(
-                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
-                      paymentData.status === "paid"
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30 font-bold"
-                        : "border-border bg-background hover:bg-muted/40 text-foreground"
-                    )}
-                  >
-                    ✓ Full Paid (₹{defaultFee})
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentStatusChange("partially_paid")}
-                    className={cn(
-                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
-                      paymentData.status === "partially_paid"
-                        ? "border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30 font-bold"
-                        : "border-border bg-background hover:bg-muted/40 text-foreground"
-                    )}
-                  >
-                    Half Paid (₹{halfFee})
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentStatusChange("later_pay")}
-                    className={cn(
-                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
-                      paymentData.status === "later_pay"
-                        ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-2 ring-amber-500/30 font-bold"
-                        : "border-border bg-background hover:bg-muted/40 text-foreground"
-                    )}
-                  >
-                    Pay Later
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentStatusChange("not_paid")}
-                    className={cn(
-                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
-                      paymentData.status === "not_paid"
-                        ? "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/30 font-bold"
-                        : "border-border bg-background hover:bg-muted/40 text-foreground"
-                    )}
-                  >
-                    Unpaid
-                  </button>
-                </div>
-              </div>
-
-              {/* Partial Amount Input */}
-              {paymentData.status === "partially_paid" && (
-                <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 space-y-3">
+              {/* 1. Payment / Donation Selection */}
+              {isVolunteer ? (
+                /* Voluntary Contribution for Volunteers */
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="partial-amount"
-                      className="text-xs font-semibold text-foreground"
-                    >
-                      Amount Collected (₹)
+                    <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      1. Voluntary Registration Fee / Donation
                     </label>
-                    <span className="text-xs text-muted-foreground">
-                      Balance Due:{" "}
-                      <span className="font-bold text-destructive tabular-nums">
-                        ₹{paymentData.amountDue}
+                    <div className="flex items-center gap-2 text-xs font-medium">
+                      <span className="text-muted-foreground">
+                        Amount: <strong className="text-emerald-600 dark:text-emerald-400 tabular-nums">₹{paymentData.amountPaid}</strong>
                       </span>
-                    </span>
+                      {paymentData.status === "later_pay" && (
+                        <span className="text-amber-600 dark:text-amber-400 font-bold">(Pay Later)</span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">
-                      ₹
-                    </span>
-                    <input
-                      id="partial-amount"
-                      type="number"
-                      min={1}
-                      max={defaultFee - 1}
-                      value={paymentData.amountPaid || ""}
-                      onChange={(e) => handlePartialAmountChange(e.target.value)}
-                      placeholder="Enter amount collected"
-                      className="w-full rounded-lg border border-border bg-background pl-8 pr-4 py-2 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-muted-foreground">Quick set:</span>
-                    {(defaultFee === 400 ? [100, 200, 300] : [100, 200, 300, 500]).map((amt) => (
+                  {/* Quick donation chips */}
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {[0, 100, 200, 300, 400, 500].map((amt) => (
                       <button
                         key={amt}
                         type="button"
-                        onClick={() => handlePartialAmountChange(String(amt))}
+                        onClick={() => handleVolunteerQuickDonation(amt)}
                         className={cn(
-                          "px-2.5 py-1 text-[11px] font-semibold rounded-md border cursor-pointer transition-all",
-                          paymentData.amountPaid === amt
-                            ? "border-blue-500 bg-blue-500 text-white shadow-xs"
-                            : "border-border bg-background hover:bg-muted"
+                          "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
+                          paymentData.amountPaid === amt && paymentData.status !== "later_pay"
+                            ? "border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30 font-bold shadow-2xs"
+                            : "border-border bg-background hover:bg-muted/40 text-foreground"
                         )}
                       >
-                        ₹{amt}
+                        {amt === 0 ? "₹0 (Free)" : `₹${amt}`}
                       </button>
                     ))}
                   </div>
+
+                  {/* Custom Amount input & Pay Later */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                    <div className="sm:col-span-2 relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground text-xs">
+                        ₹
+                      </span>
+                      <input
+                        id="volunteer-checkin-donation-amount"
+                        type="number"
+                        min={0}
+                        value={paymentData.amountPaid === 0 ? "" : paymentData.amountPaid}
+                        onChange={(e) => handleVolunteerDonationChange(e.target.value)}
+                        placeholder="Or enter custom donation amount (or ₹0)"
+                        className="w-full rounded-lg border border-border bg-background pl-8 pr-4 py-2 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleVolunteerPayLater}
+                      className={cn(
+                        "py-2 px-3 rounded-lg border text-xs font-semibold transition-all cursor-pointer text-center",
+                        paymentData.status === "later_pay"
+                          ? "border-amber-500 bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-2 ring-amber-500/30 font-bold"
+                          : "border-border bg-background hover:bg-muted/40 text-muted-foreground"
+                      )}
+                    >
+                      Pay Later
+                    </button>
+                  </div>
                 </div>
+              ) : (
+                /* Strict ₹600 Fee Selector for Participants */
+                <>
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        1. Payment Status
+                      </label>
+                      <div className="flex items-center gap-2 text-xs font-medium">
+                        <span className="text-muted-foreground">
+                          Collected: <strong className="text-emerald-600 dark:text-emerald-400 tabular-nums">₹{paymentData.amountPaid}</strong>
+                        </span>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-muted-foreground">
+                          Due: <strong className={cn("tabular-nums", paymentData.amountDue > 0 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-foreground")}>₹{paymentData.amountDue}</strong>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handlePaymentStatusChange("paid")}
+                        className={cn(
+                          "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
+                          paymentData.status === "paid"
+                            ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30 font-bold"
+                            : "border-border bg-background hover:bg-muted/40 text-foreground"
+                        )}
+                      >
+                        ✓ Full Paid (₹{defaultFee})
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handlePaymentStatusChange("partially_paid")}
+                        className={cn(
+                          "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
+                          paymentData.status === "partially_paid"
+                            ? "border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30 font-bold"
+                            : "border-border bg-background hover:bg-muted/40 text-foreground"
+                        )}
+                      >
+                        Half Paid (₹{halfFee})
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handlePaymentStatusChange("later_pay")}
+                        className={cn(
+                          "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
+                          paymentData.status === "later_pay"
+                            ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-2 ring-amber-500/30 font-bold"
+                            : "border-border bg-background hover:bg-muted/40 text-foreground"
+                        )}
+                      >
+                        Pay Later
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handlePaymentStatusChange("not_paid")}
+                        className={cn(
+                          "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
+                          paymentData.status === "not_paid"
+                            ? "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/30 font-bold"
+                            : "border-border bg-background hover:bg-muted/40 text-foreground"
+                        )}
+                      >
+                        Unpaid
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Partial Amount Input for Participants */}
+                  {paymentData.status === "partially_paid" && (
+                    <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label
+                          htmlFor="partial-amount"
+                          className="text-xs font-semibold text-foreground"
+                        >
+                          Amount Collected (₹)
+                        </label>
+                        <span className="text-xs text-muted-foreground">
+                          Balance Due:{" "}
+                          <span className="font-bold text-destructive tabular-nums">
+                            ₹{paymentData.amountDue}
+                          </span>
+                        </span>
+                      </div>
+
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">
+                          ₹
+                        </span>
+                        <input
+                          id="partial-amount"
+                          type="number"
+                          min={1}
+                          max={defaultFee - 1}
+                          value={paymentData.amountPaid || ""}
+                          onChange={(e) => handlePartialAmountChange(e.target.value)}
+                          placeholder="Enter amount collected"
+                          className="w-full rounded-lg border border-border bg-background pl-8 pr-4 py-2 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] text-muted-foreground">Quick set:</span>
+                        {[100, 200, 300, 500].map((amt) => (
+                          <button
+                            key={amt}
+                            type="button"
+                            onClick={() => handlePartialAmountChange(String(amt))}
+                            className={cn(
+                              "px-2.5 py-1 text-[11px] font-semibold rounded-md border cursor-pointer transition-all",
+                              paymentData.amountPaid === amt
+                                ? "border-blue-500 bg-blue-500 text-white shadow-xs"
+                                : "border-border bg-background hover:bg-muted"
+                            )}
+                          >
+                            ₹{amt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* 2. Payment Method Selector */}
@@ -654,6 +788,15 @@ export function CheckinModal({
                     amount={paymentData.amountPaid}
                     note={`${attendee.name.slice(0, 15)} Reg Fee`}
                   />
+                ) : isVolunteer ? (
+                  <div className="p-4 rounded-2xl border border-dashed border-emerald-500/40 bg-emerald-500/5 text-center space-y-1">
+                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                      ₹0 Registration Fee (Free Volunteer Entry)
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      No UPI payment required. Volunteers do not have a strict fee and can participate freely.
+                    </p>
+                  </div>
                 ) : (
                   <div className="p-4 rounded-2xl border border-dashed border-amber-500/40 bg-amber-500/5 text-center space-y-1">
                     <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">

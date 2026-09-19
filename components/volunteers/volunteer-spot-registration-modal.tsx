@@ -75,45 +75,31 @@ export function VolunteerSpotRegistrationModal({
     setPaymentData((prev) => ({ ...prev, method }));
   };
 
-  const handlePaymentStatusChange = (status: PaymentStatus) => {
-    let amountPaid = prevAmount(paymentData.amountPaid);
-    let amountDue = 400;
-
-    if (status === "paid") {
-      amountPaid = 400;
-      amountDue = 0;
-    } else if (status === "not_paid" || status === "later_pay") {
-      amountPaid = 0;
-      amountDue = 400;
-    } else if (status === "partially_paid") {
-      if (amountPaid <= 0 || amountPaid >= 400) {
-        amountPaid = 200;
-      }
-      amountDue = 400 - amountPaid;
-    }
-
+  const handleDonationAmountChange = (valStr: string) => {
+    const parsed = Math.max(0, parseInt(valStr.replace(/\D/g, ""), 10) || 0);
     setPaymentData((prev) => ({
       ...prev,
-      status,
-      amountPaid,
-      amountDue,
+      amountPaid: parsed,
+      amountDue: 0,
+      status: "paid",
     }));
   };
 
-  function prevAmount(current: number): number {
-    return current > 0 && current < 400 ? current : 200;
-  }
-
-  const handlePartialAmountChange = (valStr: string) => {
-    const parsed = parseInt(valStr.replace(/\D/g, ""), 10) || 0;
-    const clampedPaid = Math.min(400, Math.max(0, parsed));
-    const due = 400 - clampedPaid;
-
+  const handleQuickDonationSet = (amt: number) => {
     setPaymentData((prev) => ({
       ...prev,
-      amountPaid: clampedPaid,
-      amountDue: due,
-      status: clampedPaid === 400 ? "paid" : clampedPaid === 0 ? "not_paid" : "partially_paid",
+      amountPaid: amt,
+      amountDue: 0,
+      status: "paid",
+    }));
+  };
+
+  const handlePayLater = () => {
+    setPaymentData((prev) => ({
+      ...prev,
+      amountPaid: 0,
+      amountDue: 0,
+      status: "later_pay",
     }));
   };
 
@@ -463,144 +449,92 @@ export function VolunteerSpotRegistrationModal({
               {/* Fee banner */}
               <div className="flex items-center justify-between p-4 rounded-2xl bg-violet-500/10 border border-violet-500/20">
                 <div>
-                  <h4 className="text-sm font-bold text-foreground">Standard Volunteer Fee</h4>
-                  <p className="text-xs text-muted-foreground">Orah Campus Meet 2026</p>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-foreground">Voluntary Registration Contribution</h4>
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                      Free-will Donation
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Volunteers do not have a strict fee. They can donate any amount or register with ₹0.
+                  </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-2xl font-extrabold text-foreground tabular-nums">₹400</span>
+                  <span className="text-2xl font-extrabold text-foreground tabular-nums">
+                    {paymentData.amountPaid > 0 ? `₹${paymentData.amountPaid}` : "Free (₹0)"}
+                  </span>
                   <span className="block text-[10px] text-muted-foreground uppercase font-semibold">
-                    Per Volunteer
+                    {paymentData.amountPaid > 0 ? "Donation" : "No Fee Required"}
                   </span>
                 </div>
               </div>
 
-              {/* 1. Payment Status Selector */}
+              {/* 1. Voluntary Fee / Donation Amount Selector */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    1. Payment Status
+                    1. Registration Fee / Donation Amount
                   </label>
                   <div className="flex items-center gap-2 text-xs font-medium">
                     <span className="text-muted-foreground">
-                      Collected: <strong className="text-emerald-600 dark:text-emerald-400 tabular-nums">₹{paymentData.amountPaid}</strong>
+                      Amount: <strong className="text-emerald-600 dark:text-emerald-400 tabular-nums">₹{paymentData.amountPaid}</strong>
                     </span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-muted-foreground">
-                      Due: <strong className={cn("tabular-nums", paymentData.amountDue > 0 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-foreground")}>₹{paymentData.amountDue}</strong>
-                    </span>
+                    {paymentData.status === "later_pay" && (
+                      <span className="text-amber-600 dark:text-amber-400 font-bold">(Pay Later)</span>
+                    )}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentStatusChange("paid")}
-                    className={cn(
-                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
-                      paymentData.status === "paid"
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30 font-bold"
-                        : "border-border bg-background hover:bg-muted/40 text-foreground"
-                    )}
-                  >
-                    ✓ Full Paid (₹400)
-                  </button>
+                {/* Quick donation chips */}
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                  {[0, 100, 200, 300, 400, 500].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => handleQuickDonationSet(amt)}
+                      className={cn(
+                        "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
+                        paymentData.amountPaid === amt && paymentData.status !== "later_pay"
+                          ? "border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30 font-bold shadow-2xs"
+                          : "border-border bg-background hover:bg-muted/40 text-foreground"
+                      )}
+                    >
+                      {amt === 0 ? "₹0 (Free)" : `₹${amt}`}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Amount input & Pay Later */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                  <div className="sm:col-span-2 relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground text-xs">
+                      ₹
+                    </span>
+                    <input
+                      id="volunteer-spot-donation-amount"
+                      type="number"
+                      min={0}
+                      value={paymentData.amountPaid === 0 ? "" : paymentData.amountPaid}
+                      onChange={(e) => handleDonationAmountChange(e.target.value)}
+                      placeholder="Or enter any custom donation amount (or ₹0)"
+                      className="w-full rounded-lg border border-border bg-background pl-8 pr-4 py-2 text-xs font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
 
                   <button
                     type="button"
-                    onClick={() => handlePaymentStatusChange("partially_paid")}
+                    onClick={handlePayLater}
                     className={cn(
-                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
-                      paymentData.status === "partially_paid"
-                        ? "border-blue-500 bg-blue-500/10 text-blue-700 dark:text-blue-300 ring-2 ring-blue-500/30 font-bold"
-                        : "border-border bg-background hover:bg-muted/40 text-foreground"
-                    )}
-                  >
-                    Half Paid (₹200)
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentStatusChange("later_pay")}
-                    className={cn(
-                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
+                      "py-2 px-3 rounded-lg border text-xs font-semibold transition-all cursor-pointer text-center",
                       paymentData.status === "later_pay"
-                        ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-300 ring-2 ring-amber-500/30 font-bold"
-                        : "border-border bg-background hover:bg-muted/40 text-foreground"
+                        ? "border-amber-500 bg-amber-500/15 text-amber-700 dark:text-amber-300 ring-2 ring-amber-500/30 font-bold"
+                        : "border-border bg-background hover:bg-muted/40 text-muted-foreground"
                     )}
                   >
                     Pay Later
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handlePaymentStatusChange("not_paid")}
-                    className={cn(
-                      "py-2.5 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer text-center",
-                      paymentData.status === "not_paid"
-                        ? "border-rose-500 bg-rose-500/10 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/30 font-bold"
-                        : "border-border bg-background hover:bg-muted/40 text-foreground"
-                    )}
-                  >
-                    Unpaid
-                  </button>
                 </div>
               </div>
-
-              {/* Partial Amount Input */}
-              {paymentData.status === "partially_paid" && (
-                <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label
-                      htmlFor="volunteer-spot-partial-amount"
-                      className="text-xs font-semibold text-foreground"
-                    >
-                      Amount Collected (₹)
-                    </label>
-                    <span className="text-xs text-muted-foreground">
-                      Balance Due:{" "}
-                      <span className="font-bold text-destructive tabular-nums">
-                        ₹{paymentData.amountDue}
-                      </span>
-                    </span>
-                  </div>
-
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-semibold text-muted-foreground">
-                      ₹
-                    </span>
-                    <input
-                      id="volunteer-spot-partial-amount"
-                      type="number"
-                      min={1}
-                      max={399}
-                      value={paymentData.amountPaid || ""}
-                      onChange={(e) => handlePartialAmountChange(e.target.value)}
-                      placeholder="Enter amount collected"
-                      className="w-full rounded-lg border border-border bg-background pl-8 pr-4 py-2 text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/30"
-                    />
-                  </div>
-
-                  {/* Quick partial chips */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] text-muted-foreground">Quick set:</span>
-                    {[100, 200, 300].map((amt) => (
-                      <button
-                        key={amt}
-                        type="button"
-                        onClick={() => handlePartialAmountChange(String(amt))}
-                        className={cn(
-                          "px-2.5 py-1 text-[11px] font-semibold rounded-md border cursor-pointer transition-all",
-                          paymentData.amountPaid === amt
-                            ? "border-blue-500 bg-blue-500 text-white shadow-xs"
-                            : "border-border bg-background hover:bg-muted"
-                        )}
-                      >
-                        ₹{amt}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* 2. Payment Method Selector */}
               <div className="space-y-3">
@@ -671,12 +605,12 @@ export function VolunteerSpotRegistrationModal({
                     note={`${formData.name.slice(0, 15)} Vol Reg`}
                   />
                 ) : (
-                  <div className="p-4 rounded-2xl border border-dashed border-amber-500/40 bg-amber-500/5 text-center space-y-1">
-                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
-                      Pay Later / Unpaid Selected (₹0 Due Now)
+                  <div className="p-4 rounded-2xl border border-dashed border-emerald-500/40 bg-emerald-500/5 text-center space-y-1">
+                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                      ₹0 Registration Fee (Free Entry)
                     </p>
                     <p className="text-[11px] text-muted-foreground">
-                      No UPI QR payment required right now. The ₹400 registration fee balance is recorded as due.
+                      No UPI QR payment required. Volunteers do not have a strict fee and can register freely.
                     </p>
                   </div>
                 )

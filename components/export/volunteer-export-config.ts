@@ -72,22 +72,28 @@ export const VOLUNTEER_CSV_COLUMNS: CsvColumn<VolunteerRegistration>[] = [
     label: "Payment Status",
     getValue: (v) => {
       if (v.checkin?.payment_status) {
+        if (v.checkin.amount_paid > 0) {
+          return `Donation Paid (₹${v.checkin.amount_paid})`;
+        }
+        if (v.checkin.payment_status === "paid" || v.is_verified) {
+          return "Verified (₹0 / Free)";
+        }
         return formatPaymentStatus(v.checkin.payment_status);
       }
-      return v.is_verified ? "Paid" : "Pending";
+      return v.is_verified ? "Verified (₹0 / Free)" : "Pending";
     },
   },
   {
     key: "payment_method",
     label: "Payment Method",
-    getValue: (v) => v.checkin?.payment_method || (v.is_verified ? "UPI" : ""),
+    getValue: (v) => v.checkin?.payment_method || (v.is_verified && v.checkin?.amount_paid ? "UPI" : "—"),
   },
   {
     key: "amount_paid",
     label: "Amount Paid (₹)",
     getValue: (v) => {
       if (v.checkin?.amount_paid != null) return v.checkin.amount_paid;
-      return v.is_verified ? 400 : 0;
+      return 0;
     },
   },
   {
@@ -144,7 +150,7 @@ export const VOLUNTEER_SORT_OPTIONS: CsvSortOption<VolunteerRegistration>[] = [
   {
     label: "Amount Paid",
     key: "amount_paid",
-    getValue: (v) => v.checkin?.amount_paid ?? (v.is_verified ? 400 : 0),
+    getValue: (v) => v.checkin?.amount_paid ?? 0,
   },
   {
     label: "Check-in Status",
