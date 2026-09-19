@@ -70,7 +70,7 @@ export function VolunteersTable({ volunteers, onVolunteerUpdated }: VolunteersTa
   const [search, setSearch] = useState("");
   const [filterType, setFilterType] = useState<"ALL" | VolunteerRegistrationType>("ALL");
   const [filterStatus, setFilterStatus] = useState<"ALL" | "verified" | "pending">("ALL");
-  const [filterPayment, setFilterPayment] = useState<"ALL" | PaymentStatus | "paid" | "zero">("ALL");
+  const [filterPayment, setFilterPayment] = useState<string>("ALL");
   const [page, setPage] = useState(1);
 
   // Checkin modal state

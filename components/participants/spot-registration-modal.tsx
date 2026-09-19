@@ -24,7 +24,6 @@ import {
   PaymentStatus,
 } from "./spot-registration-types";
 import { PaymentQrCode } from "./payment-qr-code";
-import { HangingGroupBadge } from "@/components/checkin/hanging-group-badge";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
@@ -208,32 +207,29 @@ export function SpotRegistrationModal({
   };
 
   const handleClose = () => {
+    const scrollY = window.scrollY;
     onOpenChange(false);
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: scrollY, behavior: "instant" });
+    });
     // Reset state after transition finishes
     setTimeout(() => {
       handleRegisterAnother();
+      window.scrollTo({ top: scrollY, behavior: "instant" });
     }, 300);
   };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="max-w-3xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl relative"
+        className="w-full max-w-[calc(100%-1rem)] sm:max-w-2xl lg:max-w-3xl h-[92dvh] sm:max-h-[90dvh] flex flex-col p-0 bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl"
         aria-describedby="spot-reg-description"
       >
-        {/* Hanging Group Badge during Payment / Success */}
-        {currentStep !== "form" && (
-          <HangingGroupBadge
-            groupNumber={groupNumber}
-            loading={loadingGroup}
-            isAssigned={isGroupAssigned}
-          />
-        )}
 
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-border bg-muted/20">
           <DialogHeader>
-            <div className="flex items-center justify-between pr-24 sm:pr-28">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2">
                 <span className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs">
                   SPOT
@@ -813,29 +809,37 @@ export function SpotRegistrationModal({
           {/* ============================================================ */}
           {currentStep === "payment" && (
             <div className="space-y-6">
+              {/* Group Number Banner — inline, visible during payment step */}
+              {(loadingGroup || groupNumber) && (
+                <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-primary/8 border border-primary/25 ring-1 ring-primary/10">
+                  <div>
+                    <p className="text-xs font-bold text-primary uppercase tracking-wider">Assigned Group</p>
+                    <p className="text-[11px] text-muted-foreground">Event team assignment for Campus Meet 2026</p>
+                  </div>
+                  {loadingGroup ? (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="size-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      Calculating…
+                    </div>
+                  ) : (
+                    <span className="text-3xl font-black text-primary tabular-nums px-4 py-1.5 rounded-xl bg-primary/10 border border-primary/20">
+                      {groupNumber! < 10 ? `0${groupNumber}` : groupNumber}
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Fee banner */}
               <div className="flex items-center justify-between p-4 rounded-2xl bg-primary/5 border border-primary/20">
                 <div>
                   <h4 className="text-sm font-bold text-foreground">Standard Registration Fee</h4>
                   <p className="text-xs text-muted-foreground">Orah Campus Meet 2026</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  {groupNumber && (
-                    <div className="text-right">
-                      <span className="text-[10px] text-muted-foreground uppercase font-semibold block">
-                        Assigned
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-sm font-black text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-lg tabular-nums">
-                        Group {groupNumber}
-                      </span>
-                    </div>
-                  )}
-                  <div className="text-right">
-                    <span className="text-2xl font-extrabold text-foreground tabular-nums">₹600</span>
-                    <span className="block text-[10px] text-muted-foreground uppercase font-semibold">
-                      Per Attendee
-                    </span>
-                  </div>
+                <div className="text-right">
+                  <span className="text-2xl font-extrabold text-foreground tabular-nums">₹600</span>
+                  <span className="block text-[10px] text-muted-foreground uppercase font-semibold">
+                    Per Attendee
+                  </span>
                 </div>
               </div>
 

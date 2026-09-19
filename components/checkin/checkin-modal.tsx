@@ -15,7 +15,6 @@ import {
   PaymentStatus,
 } from "./checkin-types";
 import { PaymentQrCode } from "@/components/participants/payment-qr-code";
-import { HangingGroupBadge } from "./hanging-group-badge";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
@@ -251,11 +250,20 @@ export function CheckinModal({
   };
 
   const handleClose = () => {
+    // Save scroll position before dialog closes (dialog unmount returns focus to trigger
+    // which may be off-screen, causing browser scroll-jump)
+    const scrollY = window.scrollY;
     onOpenChange(false);
+    // Restore scroll position after the dialog finishes its close animation
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: scrollY, behavior: "instant" });
+    });
     setTimeout(() => {
       setSuccessData(null);
       setError(null);
-    }, 200);
+      // Double-ensure scroll position is preserved after state cleanup
+      window.scrollTo({ top: scrollY, behavior: "instant" });
+    }, 250);
   };
 
   const isAlreadyCheckedIn = attendee.isCheckedIn;
@@ -263,22 +271,13 @@ export function CheckinModal({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent
-        className="max-w-xl max-h-[90vh] flex flex-col p-0 overflow-hidden bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl relative"
+        className="w-full max-w-[calc(100%-1rem)] sm:max-w-xl h-[92dvh] sm:max-h-[90dvh] flex flex-col p-0 bg-background border-border shadow-2xl rounded-2xl sm:rounded-3xl"
         aria-describedby="checkin-modal-desc"
       >
-        {/* Hanging Group Badge (Strictly for Participants, NOT volunteers/resources) */}
-        {attendee.personType === "participant" && (
-          <HangingGroupBadge
-            groupNumber={groupNumber}
-            loading={loadingGroup}
-            isAssigned={isGroupAssigned}
-          />
-        )}
-
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-border bg-muted/20">
           <DialogHeader>
-            <div className="flex items-center justify-between pr-24 sm:pr-28">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2">
                 <span
                   className={cn(
@@ -459,6 +458,26 @@ export function CheckinModal({
           ) : (
             /* Check-in Form View */
             <div className="space-y-5">
+              {/* Group Number inline banner — Participants only */}
+              {attendee.personType === "participant" && (loadingGroup || groupNumber) && (
+                <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-primary/8 border border-primary/25 ring-1 ring-primary/10">
+                  <div>
+                    <p className="text-xs font-bold text-primary uppercase tracking-wider">Assigned Group</p>
+                    <p className="text-[11px] text-muted-foreground">Event team assignment for Campus Meet 2026</p>
+                  </div>
+                  {loadingGroup ? (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="size-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      Calculating…
+                    </div>
+                  ) : (
+                    <span className="text-3xl font-black text-primary tabular-nums px-4 py-1.5 rounded-xl bg-primary/10 border border-primary/20">
+                      {groupNumber! < 10 ? `0${groupNumber}` : groupNumber}
+                    </span>
+                  )}
+                </div>
+              )}
+
               {/* Attendee Info Card */}
               <div className="p-4 rounded-2xl border border-border bg-muted/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
