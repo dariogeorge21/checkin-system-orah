@@ -7,6 +7,7 @@ import {
   type SpotRegistrationFormData,
   type SpotPaymentData,
 } from "@/components/participants/spot-registration-types";
+import type { CheckinAcknowledgement } from "@/components/checkin/checkin-types";
 
 const FALLBACK_EVENT_ID = "b1145777-f2d2-41ea-b206-b4177f89f372";
 
@@ -225,6 +226,27 @@ export async function POST(req: Request) {
       checkinResult.group_number = assignedGroupNumber;
     }
 
+    const finalGroupNumber = checkinResult?.group_number ?? assignedGroupNumber ?? null;
+
+    const acknowledgement: CheckinAcknowledgement = {
+      groupNumber: finalGroupNumber,
+      name: registration.name,
+      phone: registration.phone,
+      personType: "participant",
+      affiliation: registration.affiliation || null,
+      college: registration.college || null,
+      institute: registration.institute || null,
+      parish: registration.parish || null,
+      diocese: registration.diocese || null,
+      ministry: null,
+      role: null,
+      paymentMethod: checkinResult?.payment_method ?? paymentData.method,
+      paymentStatus: checkinResult?.payment_status ?? paymentData.status,
+      amountPaid: checkinResult?.amount_paid !== undefined ? Number(checkinResult.amount_paid) : Number(paymentData.amountPaid) || 0,
+      amountDue: checkinResult?.amount_due !== undefined ? Number(checkinResult.amount_due) : Number(paymentData.amountDue) || 0,
+      checkedInAt: checkinResult?.checked_in_at || new Date().toISOString(),
+    };
+
     return NextResponse.json({
       success: true,
       message: "Participant registered, auto-approved, and checked in successfully.",
@@ -247,6 +269,7 @@ export async function POST(req: Request) {
         is_verified: true,
       },
       checkin: checkinResult,
+      acknowledgement,
     });
   } catch (err: any) {
     console.error("API error in /api/participants/spot-register:", err);

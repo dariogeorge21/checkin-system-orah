@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { CheckinPaymentData, PersonType } from "@/components/checkin/checkin-types";
+import type { CheckinPaymentData, PersonType, CheckinAcknowledgement } from "@/components/checkin/checkin-types";
 
 const FALLBACK_EVENT_ID = "b1145777-f2d2-41ea-b206-b4177f89f372";
 
@@ -84,6 +84,24 @@ export async function POST(req: Request) {
           checked_in_at: resource.checked_in_at,
           checked_in_by: user.id,
         },
+        acknowledgement: {
+          groupNumber: null,
+          name: resource.name,
+          phone: resource.phone,
+          personType: "resource",
+          affiliation: resource.session || "Resource Person",
+          college: null,
+          institute: null,
+          parish: null,
+          diocese: null,
+          ministry: null,
+          role: null,
+          paymentMethod: null,
+          paymentStatus: "paid",
+          amountPaid: 0,
+          amountDue: 0,
+          checkedInAt: resource.checked_in_at,
+        },
       });
     }
 
@@ -106,7 +124,7 @@ export async function POST(req: Request) {
     if (personType === "participant") {
       const { data: participant, error: pErr } = await dbClient
         .from("registrations")
-        .select("id, name, phone, email, parish, diocese, confirmed")
+        .select("id, name, phone, email, parish, diocese, affiliation, college, institute, year_of_study, confirmed")
         .eq("id", registrationId)
         .single();
 
@@ -287,11 +305,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: opErr.message }, { status: 500 });
     }
 
+    const finalGroupNumber = checkinResult?.group_number ?? assignedGroupNumber ?? null;
+
+    const acknowledgement: CheckinAcknowledgement = {
+      groupNumber: finalGroupNumber,
+      name: personRecord.name,
+      phone: personRecord.phone,
+      personType,
+      affiliation: personRecord.affiliation || null,
+      college: personRecord.college || null,
+      institute: personRecord.institute || null,
+      parish: personRecord.parish || null,
+      diocese: personRecord.diocese || null,
+      ministry: personRecord.ministry || null,
+      role: personRecord.role || null,
+      paymentMethod: checkinResult?.payment_method ?? paymentData.method,
+      paymentStatus: checkinResult?.payment_status ?? paymentData.status,
+      amountPaid: checkinResult?.amount_paid !== undefined ? Number(checkinResult.amount_paid) : Number(paymentData.amountPaid) || 0,
+      amountDue: checkinResult?.amount_due !== undefined ? Number(checkinResult.amount_due) : Number(paymentData.amountDue) || 0,
+      checkedInAt: checkinResult?.checked_in_at || new Date().toISOString(),
+    };
+
     return NextResponse.json({
       success: true,
       message: `${personType === "participant" ? "Participant" : "Volunteer"} checked in successfully.`,
       person: personRecord,
       checkin: checkinResult,
+      acknowledgement,
     });
   } catch (err: any) {
     console.error("API error in /api/checkin POST:", err);

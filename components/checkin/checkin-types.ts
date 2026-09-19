@@ -79,3 +79,23 @@ export interface RecentCheckinItem {
   registrationType: RegistrationType;
   groupNumber?: number | null;
 }
+
+export interface CheckinAcknowledgement {
+  groupNumber: number | null;
+  name: string;
+  phone: string;
+  personType: PersonType;
+  affiliation?: string | null;
+  college?: string | null;
+  institute?: string | null;
+  parish?: string | null;
+  diocese?: string | null;
+  ministry?: string | null;
+  role?: string | null;
+  paymentMethod?: PaymentMethod | null;
+  paymentStatus: PaymentStatus;
+  amountPaid: number;
+  amountDue: number;
+  checkedInAt?: string;
+}
+

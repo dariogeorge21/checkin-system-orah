@@ -91,11 +91,11 @@ export function HangingGroupBadge({
           className={cn(
             "text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-full mt-0.5",
             isAssigned
-              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-              : "bg-primary/10 text-primary"
+              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
+              : "bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/20"
           )}
         >
-          {isAssigned ? "Assigned" : "Next Group"}
+          {isAssigned ? "✓ Confirmed" : "Preview"}
         </span>
       </div>
     </div>

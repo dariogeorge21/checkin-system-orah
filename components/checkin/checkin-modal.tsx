@@ -13,6 +13,7 @@ import {
   CheckinPaymentData,
   PaymentMethod,
   PaymentStatus,
+  CheckinAcknowledgement,
 } from "./checkin-types";
 import { PaymentQrCode } from "@/components/participants/payment-qr-code";
 import { Spinner } from "@/components/ui/spinner";
@@ -48,6 +49,7 @@ export function CheckinModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successData, setSuccessData] = useState<any | null>(null);
+  const [acknowledgement, setAcknowledgement] = useState<CheckinAcknowledgement | null>(null);
 
   // Group number state for participants
   const [groupNumber, setGroupNumber] = useState<number | null>(null);
@@ -59,6 +61,7 @@ export function CheckinModal({
     if (attendee && open) {
       setError(null);
       setSuccessData(null);
+      setAcknowledgement(null);
 
       if (attendee.personType === "volunteer") {
         // Volunteers have no strict fee (free-will donation)
@@ -223,10 +226,32 @@ export function CheckinModal({
         throw new Error(data.error || "Failed to complete check-in.");
       }
 
-      const assignedGroup = data.checkin?.group_number ?? groupNumber;
+      const assignedGroup = data.acknowledgement?.groupNumber ?? data.checkin?.group_number ?? groupNumber;
       if (assignedGroup) {
         setGroupNumber(assignedGroup);
         setIsGroupAssigned(true);
+      }
+
+      if (data.acknowledgement) {
+        setAcknowledgement(data.acknowledgement);
+      } else {
+        setAcknowledgement({
+          groupNumber: assignedGroup,
+          name: attendee.name,
+          phone: attendee.phone,
+          personType: attendee.personType,
+          affiliation: attendee.affiliation,
+          college: attendee.college,
+          institute: attendee.institute,
+          parish: attendee.parish,
+          diocese: attendee.diocese,
+          ministry: attendee.ministry,
+          role: attendee.role,
+          paymentMethod: paymentData.method,
+          paymentStatus: paymentData.status,
+          amountPaid: paymentData.amountPaid,
+          amountDue: paymentData.amountDue,
+        });
       }
 
       const updatedAttendee: UnifiedAttendee = {
@@ -260,6 +285,7 @@ export function CheckinModal({
     });
     setTimeout(() => {
       setSuccessData(null);
+      setAcknowledgement(null);
       setError(null);
       // Double-ensure scroll position is preserved after state cleanup
       window.scrollTo({ top: scrollY, behavior: "instant" });
@@ -328,142 +354,238 @@ export function CheckinModal({
             </div>
           )}
 
-          {/* Success View */}
+          {/* Success View / Server Acknowledgement Confirmation */}
           {successData ? (
-            <div className="py-6 flex flex-col items-center text-center space-y-5">
-              <div className="size-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-inner">
-                <svg
-                  width="32"
-                  height="32"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
+            (() => {
+              const displayAck: CheckinAcknowledgement = acknowledgement || {
+                groupNumber: groupNumber,
+                name: attendee.name,
+                phone: attendee.phone,
+                personType: attendee.personType,
+                affiliation: attendee.affiliation,
+                college: attendee.college,
+                institute: attendee.institute,
+                parish: attendee.parish,
+                diocese: attendee.diocese,
+                ministry: attendee.ministry,
+                role: attendee.role,
+                paymentMethod: paymentData.method,
+                paymentStatus: paymentData.status,
+                amountPaid: paymentData.amountPaid,
+                amountDue: paymentData.amountDue,
+              };
 
-              <div>
-                <h3 className="text-xl font-bold text-foreground">
-                  Check-in Approved & Verified!
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-                  {attendee.name} is confirmed and checked in for Campus Meet 2026.
-                </p>
-              </div>
+              const finalGroup = displayAck.groupNumber;
+              const hasCollege =
+                (displayAck.affiliation?.toLowerCase() === "college" || !!displayAck.college) &&
+                !!displayAck.college;
+              const hasInstitute =
+                (displayAck.affiliation?.toLowerCase() === "institutes" ||
+                  displayAck.affiliation?.toLowerCase() === "institute" ||
+                  !!displayAck.institute) &&
+                !!displayAck.institute;
 
-              {/* Attendee Confirmation Card */}
-              <div className="w-full max-w-md p-4 rounded-2xl border border-border bg-muted/20 text-left space-y-2 text-xs">
-                <div className="flex items-center justify-between border-b border-border pb-2">
-                  <div>
-                    <span className="font-bold text-foreground text-sm block">
-                      {attendee.name}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground uppercase font-semibold">
-                      {attendee.personType} • {attendee.registrationType}
-                    </span>
-                  </div>
-                  <span className="px-2.5 py-1 text-[11px] font-bold rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    ✓ Verified
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <div>
-                    <span className="text-muted-foreground block text-[10px]">Phone</span>
-                    <span className="font-mono font-medium text-foreground">
-                      {attendee.phone}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[10px]">Parish / Ministry</span>
-                    <span className="font-medium text-foreground truncate block">
-                      {attendee.parish || attendee.ministry || "—"}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[10px]">Payment Recorded</span>
-                    <span className="font-semibold text-foreground">
-                      {paymentData.method} • {paymentData.status.toUpperCase()} (₹{paymentData.amountPaid})
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground block text-[10px]">Due Balance</span>
-                    <span className={cn("font-semibold", paymentData.amountDue > 0 ? "text-amber-600" : "text-emerald-600")}>
-                      ₹{paymentData.amountDue}
-                    </span>
+              return (
+                <div className="py-4 sm:py-6 flex flex-col items-center text-center space-y-4 sm:space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                  {/* Top Verified Header */}
+                  <div className="flex flex-col items-center">
+                    <div className="size-14 sm:size-16 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/10 mb-2">
+                      <svg
+                        width="30"
+                        height="30"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">
+                      Check-in Confirmed & Server Acknowledged
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Official registration and group assignment saved to database
+                    </p>
                   </div>
 
-                  {attendee.personType === "participant" && groupNumber && (
-                    <div className="col-span-2 pt-2 border-t border-border/70 flex items-center justify-between">
-                      <div>
-                        <span className="text-muted-foreground block text-[10px] uppercase font-semibold">
-                          Assigned Event Group
-                        </span>
-                        <span className="font-semibold text-foreground text-xs">
-                          Campus Meet Team
+                  {/* HERO GROUP NUMBER CARD (Participants Only) */}
+                  {displayAck.personType === "participant" && finalGroup ? (
+                    <div className="w-full max-w-md p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-primary/15 via-primary/10 to-card border-2 border-primary/40 shadow-xl text-center relative overflow-hidden ring-4 ring-primary/5">
+                      <div className="flex items-center justify-center gap-1.5 mb-1 text-[11px] font-black uppercase tracking-widest text-primary">
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                          <circle cx="9" cy="7" r="4" />
+                          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        CONFIRMED EVENT GROUP
+                      </div>
+
+                      <div className="flex items-center justify-center my-1.5">
+                        <span className="text-5xl sm:text-6xl font-black text-foreground tabular-nums tracking-tight">
+                          GROUP {finalGroup < 10 ? `0${finalGroup}` : finalGroup}
                         </span>
                       </div>
-                      <span className="px-3 py-1 text-sm font-black rounded-lg bg-primary/10 text-primary border border-primary/20 tabular-nums">
-                        Group {groupNumber}
+
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold mt-1">
+                        <span>✓ Verified by DB</span>
+                        <span className="text-muted-foreground font-normal">•</span>
+                        <span>Hand Group {finalGroup} Kit to Attendee</span>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Attendee Confirmation & Affiliation Card */}
+                  <div className="w-full max-w-md p-4 rounded-2xl border border-border bg-card shadow-sm text-left space-y-3 text-xs">
+                    {/* Name & Person Type */}
+                    <div className="flex items-start justify-between border-b border-border/80 pb-2.5">
+                      <div>
+                        <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider block">
+                          Attendee Name
+                        </span>
+                        <span className="font-extrabold text-foreground text-base sm:text-lg block leading-snug">
+                          {displayAck.name}
+                        </span>
+                      </div>
+                      <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 uppercase">
+                        {displayAck.personType}
                       </span>
                     </div>
-                  )}
-                </div>
-              </div>
 
-              <div className="pt-2 flex items-center gap-3">
-                {onScanNext && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      handleClose();
-                      onScanNext();
-                    }}
-                    className="inline-flex items-center gap-1.5 px-6 py-2.5 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer shadow-sm"
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                    {/* Affiliation / College Highlight Box */}
+                    {displayAck.personType === "participant" && (
+                      <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/25 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1">
+                            🎓 Affiliation: {displayAck.affiliation || "College"}
+                          </span>
+                        </div>
+                        {hasCollege ? (
+                          <div>
+                            <span className="text-[11px] text-muted-foreground block">College Name</span>
+                            <span className="text-sm font-bold text-foreground block">
+                              {displayAck.college}
+                            </span>
+                          </div>
+                        ) : hasInstitute ? (
+                          <div>
+                            <span className="text-[11px] text-muted-foreground block">Institute Name</span>
+                            <span className="text-sm font-bold text-foreground block">
+                              {displayAck.institute}
+                            </span>
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="text-xs font-semibold text-foreground block">
+                              {displayAck.affiliation || "General Participant"}
+                              {displayAck.parish ? ` (${displayAck.parish})` : ""}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Detail Grid */}
+                    <div className="grid grid-cols-2 gap-2.5 pt-1 text-xs">
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Phone</span>
+                        <span className="font-mono font-medium text-foreground">
+                          {displayAck.phone || "—"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Parish / Diocese</span>
+                        <span className="font-medium text-foreground truncate block">
+                          {displayAck.parish || attendee.ministry || "—"}
+                          {displayAck.diocese ? `, ${displayAck.diocese}` : ""}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Payment</span>
+                        <span className="font-semibold text-foreground">
+                          {displayAck.paymentMethod || "CASH"} • {displayAck.paymentStatus.toUpperCase()} (₹{displayAck.amountPaid})
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Due Balance</span>
+                        <span className={cn("font-semibold", displayAck.amountDue > 0 ? "text-amber-600" : "text-emerald-600")}>
+                          ₹{displayAck.amountDue}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="pt-2 flex items-center justify-center gap-3 w-full max-w-md">
+                    {onScanNext && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleClose();
+                          onScanNext();
+                        }}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-5 py-2.5 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all cursor-pointer shadow-md"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect width="14" height="14" x="5" y="5" rx="2" />
+                          <path d="M9 9h6v6H9z" />
+                        </svg>
+                        Scan Next Ticket
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleClose}
+                      className={cn(
+                        "px-6 py-2.5 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-sm",
+                        onScanNext
+                          ? "border border-border bg-card text-foreground hover:bg-muted"
+                          : "w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                      )}
                     >
-                      <rect width="14" height="14" x="5" y="5" rx="2" />
-                      <path d="M9 9h6v6H9z" />
-                    </svg>
-                    Scan Next Ticket
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  className={cn(
-                    "px-6 py-2.5 text-xs font-semibold rounded-xl transition-all cursor-pointer shadow-sm",
-                    onScanNext
-                      ? "border border-border bg-background text-foreground hover:bg-muted"
-                      : "bg-primary text-primary-foreground hover:bg-primary/90"
-                  )}
-                >
-                  {onScanNext ? "Close" : "Done (Next Attendee)"}
-                </button>
-              </div>
-            </div>
+                      {onScanNext ? "Close" : "Done (Next Attendee)"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()
           ) : (
             /* Check-in Form View */
             <div className="space-y-5">
               {/* Group Number inline banner — Participants only */}
               {attendee.personType === "participant" && (loadingGroup || groupNumber) && (
-                <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-primary/8 border border-primary/25 ring-1 ring-primary/10">
+                <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-amber-500/8 border border-amber-500/25 ring-1 ring-amber-500/10">
                   <div>
-                    <p className="text-xs font-bold text-primary uppercase tracking-wider">Assigned Group</p>
-                    <p className="text-[11px] text-muted-foreground">Event team assignment for Campus Meet 2026</p>
+                    <div className="flex items-center gap-1.5">
+                      <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
+                      <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+                        Estimated Group (Preview)
+                      </p>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Final group will be confirmed by server after payment confirmation
+                    </p>
                   </div>
                   {loadingGroup ? (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -471,7 +593,7 @@ export function CheckinModal({
                       Calculating…
                     </div>
                   ) : (
-                    <span className="text-3xl font-black text-primary tabular-nums px-4 py-1.5 rounded-xl bg-primary/10 border border-primary/20">
+                    <span className="text-2xl sm:text-3xl font-black text-amber-700 dark:text-amber-400 tabular-nums px-3.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20">
                       {groupNumber! < 10 ? `0${groupNumber}` : groupNumber}
                     </span>
                   )}
